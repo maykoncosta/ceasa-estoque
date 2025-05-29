@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #eaedf0;
+}
+
+button {
+    background-color: #2553EB;
+    color: white;
+}
+
+.button-secundary {
+    background-color: #4F46E5;
+}
+
+p{
+    color: #111827;
+}
+
+h1{
+    color: #111827;
+}
+
+.background{
+    background-color: #E8F0FE;
+}
+
+input{
+    background: #eaedf0;;
+}

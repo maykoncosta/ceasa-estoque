@@ -1,80 +1,64 @@
-<div class="background mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-4">
-    <div *ngIf="!onEdit && !onCreate" class="flex flex-col">
+<div class="mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-2 md:p-4">
+    <div class="flex flex-col">
         <h1 class="text-xl p-4 font-bold">PRODUTOS</h1>
-        <!-- <ul class="flex flex-col-reverse gap-8 divide-y-2 divide-y-reverse divide-blue-100">
-            <li *ngFor="let produto of produtos" class="flex flex-row justify-between">
-                <span class="w-2/6" >{{produto.nome}}</span>
-                <span class="w-3/6">{{produto.descricao}}</span>
-                <span class="w-1/6">{{produto.preco}}</span>
-                <span class="w-1/6">{{produto.unidadeMedida}}</span>
-            </li>
-            <li class="flex flex-row justify-between">
-                <strong>Nome</strong>
-                <strong>Descrição</strong>
-                <strong>Preço</strong>
-                <strong>Uni. Medida</strong>
-            </li>
-        </ul> -->
         <table class="border-collapse shadow-sm rounded-lg">
             <thead>
-                <tr class="border-b-2">
-                    <th class="sm:p-1 text-left">Nome</th>
-                    <th class="sm:p-1 text-left">Descrição</th>
-                    <th class="sm:p-1 text-left">Preço</th>
-                    <th class="sm:p-1 text-left">Uni. Medida</th>
-                    <th class="sm:p-1 text-right"></th>
+                <tr class="border-b-2 bg-blue-100">
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Nome</th>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Estoque</th>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Preço</th>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Uni. Medida</th>
+                    <th class="sm:p-2 max-w-24 min-w-16">
+                        <i class="fa-solid fa-plus cursor-pointer" (click)="onCreateItem()"></i>
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 <tr class="border-b-2" *ngFor="let produto of produtos">
-                    <td class="sm:p-1 text-left">{{produto.nome}}</td>
-                    <td class="sm:p-1 text-left">{{produto.descricao}}</td>
-                    <td class="sm:p-1">{{produto.preco}}</td>
-                    <td class="sm:p-1">{{produto.unidadeMedida}}</td>
-                    <td class="sm:p-1 flex justify-around text-right">
-                        <i class="fa-regular fa-pen-to-square cursor-pointer"></i>
-                        <i class="fa-solid fa-trash cursor-pointer" cursor-pointer></i>
+                    <td class="sm:p-1 text-left text-sm md:text-base lg:text-base">{{produto.nome}}</td>
+                    <td class="sm:p-1 text-left text-sm md:text-base lg:text-base" [ngClass]="{'text-red-600' : produto.estoque < 0}">{{produto.estoque}}</td>
+                    <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.preco}}</td>
+                    <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.unidadeMedida}}</td>
+                    <td class="sm:p-2 flex justify-around text-right">
+                        <i class="fa-regular fa-pen-to-square cursor-pointer" (click)="onEditItem(produto)"></i>
+                        <i class="fa-solid fa-trash cursor-pointer" (click)="onDeleteItem(produto)"></i>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div *ngIf="onEdit">
-        <h2 class="text-xl">Editar Produto</h2>
+    <div *ngIf="onEdit || onCreate" class="bg-blue-100 mt-4 p-2 rounded-md">
+        <h2 *ngIf="onEdit" class="text-xl font-semibold">Editar Produto</h2>
+        <h2 *ngIf="onCreate" class="text-xl font-semibold">Cadastrar Produto</h2>
         <br>
-        <form (ngSubmit)="onCreateProduto()" class="flex flex-col items-center" validate>
-            <div class="flex flex-col mt-4 w-full md:w-1/2 lg:w-1/3">
+        <form (ngSubmit)="createProduto()" (reset)="onCancel()" [formGroup]="form" #profileForm="ngForm"
+            class="flex flex-col md:grid md:grid-cols-3 md:gap-4 items-center" validate>
+            <div class="flex flex-col mt-4 w-full">
                 <label for="nome">Nome</label>
-                <input type="text" id="nome" [(ngModel)]="nome" name="nome"
+                <input type="text" id="nome" formControlName="nome" name="nome"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
-            <div class="flex flex-col mt-4 w-full md:w-1/2 lg:w-1/3">
-                <label for="preco">Preço</label>
-                <input type="text" id="preco" [(ngModel)]="preco" name="preco"
+            <div class="flex flex-col mt-4 w-full md:col-span-2">
+                <label for="estoque">Estoque</label>
+                <input type="text" id="estoque" formControlName="estoque" name="estoque"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
-
-            <button type="submit" class="m-6 p-2 w-3/6 bg-blue-500 hover:bg focus:outline-2 
-            focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md">Editar</button>
-        </form>
-    </div>
-    <div *ngIf="onCreate">
-        <h2 class="text-xl">Cadastrar Produto</h2>
-        <br>
-        <form (ngSubmit)="onCreateProduto()" class="flex flex-col items-center">
-            <div class="flex flex-col mt-4 w-full md:w-1/2 lg:w-1/3">
-                <label for="nome">Nome</label>
-                <input type="text" id="nome" [(ngModel)]="nome" name="nome"
-                    class="mt-2 border border-gray-300 rounded-xl px-3 py-2" required>
+            <div class="flex flex-col mt-4 w-full">
+                <label for="unidadeMedida">Unidade de Medida</label>
+                <input type="text" id="unidadeMedida" formControlName="unidadeMedida" name="unidadeMedida"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
-            <div class="flex flex-col mt-4 w-full md:w-1/2 lg:w-1/3">
+            <div class="flex flex-col mt-4 w-full">
                 <label for="preco">Preço</label>
-                <input type="text" id="preco" [(ngModel)]="preco" name="preco"
-                    class="mt-2 border border-gray-300 rounded-xl px-3 py-2" required>
+                <input type="text" id="preco" formControlName="preco" name="preco"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
+            <div class="w-full"></div>
+            <button type="submit" class="p-2 w-3/6 m-6 md:m-1 w-full bg-blue-500 hover:bg focus:outline-2 
+            focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md align-left">Salvar</button>
 
-            <button type="submit" class="mt-6 p-2 w-5/6 bg-blue-500 hover:bg focus:outline-2 
-            focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700">Cadastrar</button>
+            <button type="reset" class="p-2 w-3/6 md: w-full bg-red-500 hover:bg focus:outline-2 
+            focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md align-left">Cancelar</button>
         </form>
     </div>
 </div>

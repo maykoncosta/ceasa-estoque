@@ -1,0 +1,39 @@
+.message-container {
+    top: 10%;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    position: fixed;
+    z-index: 10000;
+    padding: 12px 24px;
+    border-radius: 8px;
+    flex-direction: column;
+    color: white;
+    font-weight: 500;
+    animation: fadeInOut 0.3s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.message-container.success {
+    background-color: #22c55e;
+}
+
+.message-container.error {
+    background-color: #ef4444;
+}
+
+.message-container.info {
+    background-color: #bfac00;
+}
+
+@keyframes fadeInOut {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

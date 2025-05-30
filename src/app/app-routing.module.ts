@@ -5,12 +5,13 @@ import { LoginComponent } from './pages/login/login.component';
 import { ProdutoComponent } from './pages/produto/produto.component';
 import { UnidadeMedidaComponent } from './pages/unidade-medida/unidade-medida.component';
 import { AuthGuard } from './core/guards/auth.guard';
+import { LoginGuard } from './core/guards/login.guard';
 
 const routes: Routes = [
   {path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard]},
   {path: 'produtos', component: ProdutoComponent, canActivate: [AuthGuard]},
   {path: 'unidades', component: UnidadeMedidaComponent, canActivate: [AuthGuard]},
-  {path: 'login', component: LoginComponent},
+  {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
   {path: '**', redirectTo: '', canActivate: [AuthGuard]}
 ];
 

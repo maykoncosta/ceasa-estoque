@@ -1,16 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { delay } from 'rxjs';
+import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
-
-export interface Produto {
-  id: number;
-  nome: string;
-  estoque: number;
-  preco: any;
-  unidadeMedida: any;
-}
 
 @Component({
   selector: 'app-produto',
@@ -24,10 +17,12 @@ export class ProdutoComponent implements OnInit {
   form!: UntypedFormGroup;
   showDeleteModal = false;
   itemToDelete: Produto | any = undefined;
+  produtos: Produto[] = [];
 
-  constructor(private fb: FormBuilder,
+  constructor(
     private messageService: MessageService,
-    private loaderService: LoaderService
+    private loaderService: LoaderService,
+    private produtoService: ProdutoService
   ) {
   }
   ngOnInit(): void {
@@ -38,18 +33,27 @@ export class ProdutoComponent implements OnInit {
       preco: new UntypedFormControl(undefined, Validators.required),
       unidadeMedida: new UntypedFormControl(undefined, Validators.required),
     });
+    this.loaderService.showLoading();
+    this.listarProdutos();
+
   }
 
-  produtos: Produto[] = [{ id: 1, nome: 'MELANCIA', preco: '0.70', unidadeMedida: 'KG', estoque: 0 } as Produto,
-  { id: 2, nome: 'MORANGO', preco: '10.00', unidadeMedida: 'BANDEJA', estoque: 10 } as Produto
-  ];
+  listarProdutos() {
+    this.produtoService.listarProdutos().subscribe(data => {
+      this.produtos = data;
+      this.loaderService.closeLoading();
+    });
+  }
 
   async createProduto() {
     let produto: Produto = this.form.getRawValue();
+    this.loaderService.showLoading();
     if (this.onEdit) {
-      this.produtos = this.produtos.filter(p => p.id !== produto.id);
+      this.produtoService.atualizarProduto(produto.id, produto);
+    }else {
+      this.produtoService.adicionarProduto(produto);
     }
-    this.produtos.push(produto);
+    this.listarProdutos()
     this.onCreate = false;
     this.onEdit = false;
     this.form.reset();
@@ -80,11 +84,16 @@ export class ProdutoComponent implements OnInit {
   }
 
   deleteItem() {
-    if(this.itemToDelete) {
-      this.produtos = this.produtos.filter(p => p.id !== this.itemToDelete.id);
-      this.messageService.success();
-      this.itemToDelete = undefined;
-      this.showDeleteModal = false;
+    if (this.itemToDelete) {
+      this.loaderService.showLoading();
+      this.produtoService.excluirProduto(this.itemToDelete.id).then(() => {
+        this.itemToDelete = undefined;
+        this.showDeleteModal = false;
+        this.messageService.success();
+        this.listarProdutos();
+      }).catch(() => {
+        this.messageService.error();
+      })
     }
   }
 }

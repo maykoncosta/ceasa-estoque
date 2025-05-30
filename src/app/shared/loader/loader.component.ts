@@ -13,7 +13,6 @@ export class LoaderComponent {
 
   ngOnInit(): void {
     this.loaderService.loading$.subscribe((visible: boolean) => {
-      console.log(visible)
       this.show = visible;
     });
   }

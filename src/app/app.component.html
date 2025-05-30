@@ -9,7 +9,11 @@
         </button>
         <h2 *ngIf="!(user$ | async)"></h2>
         <h1 class="text-lg font-bold"> Balcão Rápido</h1>
-        <h2></h2>
+
+        <button class="background" *ngIf="user$ | async" (click)="logout()" class="p-2 md:min-w-16 ">
+            <i class="fa-solid fa-right-from-bracket w-8"></i>
+        </button>
+        <h2 *ngIf="!(user$ | async)"></h2>
     </header>
     <div class="flex flex-1 overflow-hidden">
         <app-sidebar *ngIf="!sidebarOpen"></app-sidebar>

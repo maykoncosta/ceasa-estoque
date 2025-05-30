@@ -20,4 +20,8 @@ export class AppComponent {
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
   }
+
+  async logout() {
+    await this.authService.logout();
+  }
 }

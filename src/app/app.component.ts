@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import { AuthService } from './core/services/auth.service';
+import { Observable } from 'rxjs';
+import { User } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +11,11 @@ import { Component } from '@angular/core';
 export class AppComponent {
   title = 'ceasa-estoque';
   sidebarOpen = true;
+  user$: Observable<User | null>;
+
+  constructor(private authService: AuthService){
+    this.user$ = this.authService.currentUser$;
+  }
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;

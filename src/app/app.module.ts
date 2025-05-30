@@ -11,6 +11,15 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MessageComponent } from './shared/message/message.component';
 import { LoaderComponent } from './shared/loader/loader.component';
+import { ConfirmModalComponent } from './shared/confirm-modal/confirm-modal.component';
+import { UnidadeMedidaComponent } from './pages/unidade-medida/unidade-medida.component';
+
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideAuth, getAuth } from '@angular/fire/auth';
+import { getStorage, provideStorage } from '@angular/fire/storage';
+import { environment } from '../environments/environment';
+
 
 @NgModule({
   declarations: [
@@ -18,7 +27,9 @@ import { LoaderComponent } from './shared/loader/loader.component';
     SidebarComponent,
     ProdutoComponent,
     MessageComponent,
-    LoaderComponent
+    LoaderComponent,
+    ConfirmModalComponent,
+    UnidadeMedidaComponent
   ],
   imports: [
     BrowserModule,
@@ -27,7 +38,12 @@ import { LoaderComponent } from './shared/loader/loader.component';
     LoginModule,
     FormsModule,
     ReactiveFormsModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirestore(() => getFirestore()),
+    provideAuth(() => getAuth()),
+    provideStorage(() => getStorage()), 
+
   ],
   providers: [],
   bootstrap: [AppComponent]

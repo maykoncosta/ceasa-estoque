@@ -16,7 +16,9 @@
             <tbody>
                 <tr class="border-b-2" *ngFor="let produto of produtos">
                     <td class="sm:p-1 text-left text-sm md:text-base lg:text-base">{{produto.nome}}</td>
-                    <td class="sm:p-1 text-left text-sm md:text-base lg:text-base" [ngClass]="{'text-red-600' : produto.estoque < 0}">{{produto.estoque}}</td>
+                    <td class="sm:p-1 text-left text-sm md:text-base lg:text-base"
+                        [ngClass]="{'text-red-600' : produto.estoque <= 0}">
+                        {{produto.estoque}}</td>
                     <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.preco}}</td>
                     <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.unidadeMedida}}</td>
                     <td class="sm:p-2 flex justify-around text-right">
@@ -27,18 +29,18 @@
             </tbody>
         </table>
     </div>
-    <div *ngIf="onEdit || onCreate" class="bg-blue-100 mt-4 p-2 rounded-md">
+    <div *ngIf="onEdit || onCreate" class="bg-blue-100 mt-4 p-2 rounded-md shadow-md">
         <h2 *ngIf="onEdit" class="text-xl font-semibold">Editar Produto</h2>
         <h2 *ngIf="onCreate" class="text-xl font-semibold">Cadastrar Produto</h2>
         <br>
         <form (ngSubmit)="createProduto()" (reset)="onCancel()" [formGroup]="form" #profileForm="ngForm"
-            class="flex flex-col md:grid md:grid-cols-3 md:gap-4 items-center" validate>
+            class="flex flex-col md:grid md:grid-cols-4 md:gap-4 items-center" validate>
             <div class="flex flex-col mt-4 w-full">
                 <label for="nome">Nome</label>
                 <input type="text" id="nome" formControlName="nome" name="nome"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
-            <div class="flex flex-col mt-4 w-full md:col-span-2">
+            <div class="flex flex-col mt-4 w-full md:col-span-1">
                 <label for="estoque">Estoque</label>
                 <input type="text" id="estoque" formControlName="estoque" name="estoque"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
@@ -53,12 +55,14 @@
                 <input type="text" id="preco" formControlName="preco" name="preco"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
-            <div class="w-full"></div>
-            <button type="submit" class="p-2 w-3/6 m-6 md:m-1 w-full bg-blue-500 hover:bg focus:outline-2 
+            <button type="submit" class="p-2 w-3/6 md:w-full m-4 md:m-1 bg-blue-500 hover:bg focus:outline-2 
             focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md align-left">Salvar</button>
 
-            <button type="reset" class="p-2 w-3/6 md: w-full bg-red-500 hover:bg focus:outline-2 
+            <button type="reset" class="p-2 w-3/6 md:m-1 md:w-full bg-red-500 hover:bg focus:outline-2 
             focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md align-left">Cancelar</button>
         </form>
     </div>
 </div>
+
+<app-confirm-modal [show]="showDeleteModal" (confirm)="deleteItem()" (cancel)="showDeleteModal = false">
+</app-confirm-modal>

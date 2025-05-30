@@ -22,6 +22,8 @@ export class ProdutoComponent implements OnInit {
   onEdit: boolean = false;
   onCreate: boolean = false;
   form!: UntypedFormGroup;
+  showDeleteModal = false;
+  itemToDelete: Produto | any = undefined;
 
   constructor(private fb: FormBuilder,
     private messageService: MessageService,
@@ -67,13 +69,22 @@ export class ProdutoComponent implements OnInit {
   }
 
   onDeleteItem(produto: Produto) {
-    this.produtos = this.produtos.filter(p => p.id !== produto.id);
-    this.messageService.success();
+    this.showDeleteModal = true;
+    this.itemToDelete = produto;
   }
 
   onCancel() {
     this.onEdit = false;
     this.onCreate = false;
     this.form.reset();
+  }
+
+  deleteItem() {
+    if(this.itemToDelete) {
+      this.produtos = this.produtos.filter(p => p.id !== this.itemToDelete.id);
+      this.messageService.success();
+      this.itemToDelete = undefined;
+      this.showDeleteModal = false;
+    }
   }
 }

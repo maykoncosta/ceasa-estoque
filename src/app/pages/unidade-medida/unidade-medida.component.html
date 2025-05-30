@@ -1,0 +1,46 @@
+<div class="mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-2 md:p-4">
+    <div class="flex flex-col">
+        <h1 class="text-xl p-4 font-bold">Unidades de Medida</h1>
+        <table class="border-collapse shadow-sm rounded-lg">
+            <thead>
+                <tr class="border-b-2 bg-blue-100">
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Nome</th>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Descrição</th>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b-2" *ngFor="let unidade of unidades">
+                    <td class="sm:p-1 text-left text-sm md:text-base lg:text-base">{{unidade.nome}}</td>
+                    <td class="sm:p-1 text-sm md:text-base lg:text-base">{{unidade.descricao}}</td>
+                    <td class="sm:p-2 flex justify-around text-right">
+                        <i class="fa-solid fa-trash cursor-pointer" (click)="onDeleteItem(unidade)"></i>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="bg-blue-100 mt-4 p-2 rounded-md shadow-md">
+        <h2 class="text-xl font-semibold">Cadastrar Unidade Medida</h2>
+        <br>
+        <form (ngSubmit)="createUnidadeMedida()" class="flex flex-col md:grid md:grid-cols-4 md:gap-4 items-center"
+            validate>
+            <div class="flex flex-col mt-4 w-full">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" [(ngModel)]="nome" name="nome"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+            </div>
+            <div class="flex flex-col mt-4 w-full md:col-span-2">
+                <label for="descricao">Descrição</label>
+                <input type="text" id="descricao" [(ngModel)]="descricao" name="descricao"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+            </div>
+            <div class="w-full"></div>
+            <button type="submit" class="p-2 w-3/6 md:w-full m-4 md:m-1 bg-blue-500 hover:bg focus:outline-2 
+            focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md align-left">Salvar</button>
+        </form>
+    </div>
+</div>
+
+<app-confirm-modal [show]="showDeleteModal" (confirm)="deleteItem()" (cancel)="showDeleteModal = false">
+</app-confirm-modal>

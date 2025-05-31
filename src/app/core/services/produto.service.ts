@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, query, updateDoc, where } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
+import { UnidadeMedida } from './unidade-medida.service';
 
 export interface Produto {
   empresa_id: string;
@@ -9,7 +10,7 @@ export interface Produto {
   nome: string;
   preco: number;
   estoque: number;
-  unidadeMedida: any;
+  unidadeMedida: UnidadeMedida
 }
 
 @Injectable({
@@ -17,10 +18,7 @@ export interface Produto {
 })
 export class ProdutoService {
 
-  private produtosRef = collection(this.firestore, 'produtos');
-
   constructor(private firestore: Firestore, private auth: Auth) { }
-
 
   listarProdutos(): Observable<Produto[]> {
     const user = this.auth.currentUser;
@@ -50,6 +48,4 @@ export class ProdutoService {
     const produtoDoc = doc(this.firestore, `produtos/${id}`);
     return deleteDoc(produtoDoc) ;
   }
-
-
 }

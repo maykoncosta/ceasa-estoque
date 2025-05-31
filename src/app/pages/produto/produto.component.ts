@@ -1,9 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { delay } from 'rxjs';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
+import { UnidadeMedida, UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
+
+class LabelValue{
+  label: any;
+  value: any;
+  
+}
 
 @Component({
   selector: 'app-produto',
@@ -18,11 +24,13 @@ export class ProdutoComponent implements OnInit {
   showDeleteModal = false;
   itemToDelete: Produto | any = undefined;
   produtos: Produto[] = [];
+  unidades: any[] = [];
 
   constructor(
     private messageService: MessageService,
     private loaderService: LoaderService,
-    private produtoService: ProdutoService
+    private produtoService: ProdutoService,
+    private unidadeService: UnidadeMedidaService
   ) {
   }
   ngOnInit(): void {
@@ -35,12 +43,16 @@ export class ProdutoComponent implements OnInit {
     });
     this.loaderService.showLoading();
     this.listarProdutos();
+    this.unidadeService.listarUnidades().subscribe(data => {
+        this.unidades = data;
+    });
 
   }
 
   listarProdutos() {
     this.produtoService.listarProdutos().subscribe(data => {
       this.produtos = data;
+      console.log(data)
       this.loaderService.closeLoading();
     });
   }
@@ -48,11 +60,25 @@ export class ProdutoComponent implements OnInit {
   async createProduto() {
     let produto: Produto = this.form.getRawValue();
     this.loaderService.showLoading();
+    let unidadeMedida: UnidadeMedida = this.form.get('unidadeMedida')?.value;
     if (this.onEdit) {
-      this.produtoService.atualizarProduto(produto.id, produto);
-    }else {
-      this.produtoService.adicionarProduto(produto);
+      this.produtoService.atualizarProduto(produto.id, produto).then(data => {
+        this.aposSalvar();
+      }).catch(error => {
+        this.loaderService.closeLoading();
+        this.messageService.error();
+      });
+    } else {
+      this.produtoService.adicionarProduto(produto)?.then(data => {
+        this.aposSalvar();
+      }).catch(error => {
+        this.loaderService.closeLoading();
+        this.messageService.error();
+      });
     }
+  }
+
+  aposSalvar() {
     this.listarProdutos()
     this.onCreate = false;
     this.onEdit = false;
@@ -96,4 +122,6 @@ export class ProdutoComponent implements OnInit {
       })
     }
   }
+
+
 }

@@ -1,40 +1,50 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { UnidadeMedida, UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
+import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
-
-export interface UnidadeMedida {
-  nome: string;
-  descricao: string;
-}
 
 @Component({
   selector: 'app-unidade-medida',
   templateUrl: './unidade-medida.component.html',
   styleUrls: ['./unidade-medida.component.css']
 })
-export class UnidadeMedidaComponent {
+export class UnidadeMedidaComponent implements OnInit {
 
   nome: string = '';
   descricao: string = '';
-  unidades: any[] = [{ nome: 'KG', descricao: 'Quilo' }, { nome: 'CX', descricao: 'Caixa' }];
+  unidades: UnidadeMedida[] = [];
   itemToDelete: UnidadeMedida | any = undefined;
   showDeleteModal: boolean = false;
 
-  constructor(private messageService: MessageService) { }
+  constructor(
+    private messageService: MessageService,
+    private unidadeService: UnidadeMedidaService,
+    private loaderService: LoaderService
+  ) { }
+  ngOnInit(): void {
+    this.loaderService.showLoading();
+    this.listarUnidades();
+  }
+
+  listarUnidades() {
+    this.unidadeService.listarUnidades().subscribe(data => {
+      this.unidades = data;
+      this.loaderService.closeLoading();
+    });
+  }
 
   async createUnidadeMedida() {
     let unidade: any = { nome: this.nome, descricao: this.descricao }
     if (this.nome?.length > 1 && this.descricao?.length > 1) {
-      let unidadeExistente = this.unidades.filter(u => u.nome === this.nome);
-      if(unidadeExistente) {
-        this.messageService.error("Unidade de Medida já existente.")
-      } else {
-        this.unidades.push(unidade);
+      this.loaderService.showLoading();
+      this.unidadeService.adicionarUnidade(unidade).then((u) => {
         this.nome = '';
         this.descricao = '';
         this.messageService.success();
-      }
-    } else {
-      this.messageService.info("É Necessário preencher Nome e Descrição.")
+      }).catch((error => {
+        this.messageService.error(error.message);
+        this.loaderService.closeLoading();
+      }))
     }
   }
 
@@ -45,10 +55,21 @@ export class UnidadeMedidaComponent {
 
   deleteItem() {
     if (this.itemToDelete) {
-      this.unidades = this.unidades.filter(u => u.nome !== this.itemToDelete.nome);
-      this.messageService.success();
-      this.itemToDelete = undefined;
-      this.showDeleteModal = false;
+      this.loaderService.showLoading();
+      this.unidadeService.excluirUnidade(this.itemToDelete.id, this.itemToDelete.nome).then(() => {
+        this.showDeleteModal = false;
+        this.itemToDelete = undefined;
+        this.messageService.success();
+        this.listarUnidades();
+      }).catch(error => {
+        this.messageService.error(error.message);
+        this.loaderService.closeLoading();
+      })
     }
+  }
+
+  limparCampos(){
+    this.nome = '';
+    this.descricao = '';
   }
 }

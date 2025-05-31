@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -19,7 +19,10 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { getStorage, provideStorage } from '@angular/fire/storage';
 import { environment } from '../environments/environment';
+import { CurrencyPipe, registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
 
+registerLocaleData(localePt);
 
 @NgModule({
   declarations: [
@@ -39,13 +42,13 @@ import { environment } from '../environments/environment';
     FormsModule,
     ReactiveFormsModule,
     FontAwesomeModule,
+    CurrencyPipe,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideFirestore(() => getFirestore()),
     provideAuth(() => getAuth()),
     provideStorage(() => getStorage()), 
-
   ],
-  providers: [],
+  providers: [ {provide: LOCALE_ID, useValue: 'pt-BR'} ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

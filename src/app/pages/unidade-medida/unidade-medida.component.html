@@ -23,21 +23,24 @@
     <div class="bg-blue-100 mt-4 p-2 rounded-md shadow-md">
         <h2 class="text-xl font-semibold">Cadastrar Unidade Medida</h2>
         <br>
-        <form (ngSubmit)="createUnidadeMedida()" class="flex flex-col md:grid md:grid-cols-4 md:gap-4 items-center"
+        <form (ngSubmit)="createUnidadeMedida()" (reset)="limparCampos()" class="flex flex-col md:grid md:grid-cols-4 md:gap-4 items-center"
             validate>
             <div class="flex flex-col mt-4 w-full">
                 <label for="nome">Nome</label>
-                <input type="text" id="nome" [(ngModel)]="nome" name="nome"
+                <input type="text" id="nome" [(ngModel)]="nome" name="nome" maxlength="10"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
             <div class="flex flex-col mt-4 w-full md:col-span-2">
                 <label for="descricao">Descrição</label>
-                <input type="text" id="descricao" [(ngModel)]="descricao" name="descricao"
+                <input type="text" id="descricao" [(ngModel)]="descricao" name="descricao" maxlength="35"
                     class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
             </div>
             <div class="w-full"></div>
             <button type="submit" class="p-2 w-3/6 md:w-full m-4 md:m-1 bg-blue-500 hover:bg focus:outline-2 
             focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md align-left">Salvar</button>
+
+            <button type="reset" class="p-2 w-3/6 md:w-full m-4 md:m-1 bg-red-500 hover:bg focus:outline-2 
+            focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md align-left">Limpar</button>
         </form>
     </div>
 </div>

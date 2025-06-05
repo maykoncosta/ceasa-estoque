@@ -1,15 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
-import { UnidadeMedida, UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
+import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
-
-class LabelValue{
-  label: any;
-  value: any;
-  
-}
 
 @Component({
   selector: 'app-produto',
@@ -60,7 +54,6 @@ export class ProdutoComponent implements OnInit {
   async createProduto() {
     let produto: Produto = this.form.getRawValue();
     this.loaderService.showLoading();
-    let unidadeMedida: UnidadeMedida = this.form.get('unidadeMedida')?.value;
     if (this.onEdit) {
       this.produtoService.atualizarProduto(produto.id, produto).then(data => {
         this.aposSalvar();

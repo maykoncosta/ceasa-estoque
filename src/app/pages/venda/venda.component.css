@@ -1,0 +1,62 @@
+/* Responsive styles for Venda component */
+
+/* Make tables responsive on small screens */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure proper spacing on small screens */
+@media (max-width: 640px) {
+  .p-2 {
+    padding: 0.5rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.8125rem !important;
+  }
+  
+  .p-4 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Fix button spacing on small screens */
+  .flex.justify-end {
+    padding-top: 0.5rem;
+  }
+  
+  /* Ensure table doesn't squeeze too much */
+  th, td {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+/* Fix for double scrollbars in tables */
+.overflow-x-auto {
+  overflow-y: visible;
+}
+
+/* Fix table layouts */
+table {
+  table-layout: auto;
+}
+
+/* Add subtle animation to hover states */
+tr.hover\:bg-gray-50:hover {
+  transition: background-color 0.2s ease;
+}
+
+/* Fix button touch target size on mobile */
+button {
+  min-height: 2.75rem;
+}
+
+/* Fix form field spacing */
+.flex.flex-col {
+  margin-bottom: 0.5rem;
+}
+
+/* Ensure input controls have proper height */
+input, select {
+  min-height: 2.375rem;
+}

@@ -1,1 +1,221 @@
-<p>dash board</p>
+<div class="mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-2 md:p-4">
+    <h1 class="text-2xl font-bold mb-6 px-2">Dashboard</h1>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p class="mt-2 text-gray-600">Carregando informações...</p>
+        </div>
+    </div>
+
+    <div *ngIf="!loading" class="space-y-6">
+        <!-- Ações rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <button (click)="navegarPara('/vendas')"
+                class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center transition-all">
+                <i class="fa-solid fa-cart-plus text-2xl mb-2"></i>
+                <span class="text-lg font-medium">Nova Venda</span>
+            </button>
+
+            <button (click)="navegarPara('/produtos')"
+                class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center transition-all">
+                <i class="fa-solid fa-box text-2xl mb-2"></i>
+                <span class="text-lg font-medium">Gerenciar Produtos</span>
+            </button>
+
+            <button (click)="navegarPara('/relatorios')"
+                class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center transition-all">
+                <i class="fa-solid fa-chart-line text-2xl mb-2"></i>
+                <span class="text-lg font-medium">Ver Relatórios</span>
+            </button>
+        </div>
+
+        <!-- Cards de Estatísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Vendas do Dia -->
+            <div class="p-4 bg-gradient-to-br from-blue-100 to-[#E8F0FE] rounded-lg shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Vendas Hoje</p>
+                        <h3 class="text-xl font-bold">{{ vendasHoje }}</h3>
+                    </div>
+                    <div class="p-2 bg-blue-500 bg-opacity-20 rounded-full">
+                        <i class="fa-solid fa-receipt text-blue-800"></i>
+                    </div>
+                </div>
+                <p class="text-lg font-bold mt-2">{{ valorTotalHoje | currency:'BRL' }}</p>
+            </div>
+
+            <!-- Produtos com Baixo Estoque -->
+            <div class="p-4 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600">Produtos com Baixo Estoque</p>
+                    <div class="p-2 bg-amber-500 bg-opacity-20 rounded-full">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-800"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold">{{ produtosBaixoEstoque.length }} produtos</h3>
+                <ul class="mt-2 text-sm" *ngIf="produtosBaixoEstoque.length > 0">
+                    <li *ngFor="let p of produtosBaixoEstoque | slice:0:3" class="flex justify-between items-center">
+                        <span>{{ p.nome }}</span>
+                        <span [ngClass]="p.estoque <= 5 ? 'text-red-700 font-bold' : 'text-amber-700'">
+                            {{ p.estoque }} {{ p.unidadeMedida?.nome }}
+                        </span>
+                    </li>
+                    <li *ngIf="produtosBaixoEstoque.length > 3" class="text-sm text-gray-600 italic mt-1">
+                        + {{ produtosBaixoEstoque.length - 3 }} outros
+                    </li>
+                </ul>
+                <p *ngIf="produtosBaixoEstoque.length === 0" class="text-sm text-gray-600">Todos os produtos com estoque
+                    adequado.</p>
+            </div>
+
+            <!-- Clientes Frequentes -->
+            <div class="p-4 bg-gradient-to-br from-green-100 to-green-50 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600">Clientes Frequentes</p>
+                    <div class="p-2 bg-green-500 bg-opacity-20 rounded-full">
+                        <i class="fa-solid fa-users text-green-800"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold">{{ clientesMaisFrequentes.length }} clientes</h3>
+                <ul class="mt-2 text-sm" *ngIf="clientesMaisFrequentes.length > 0">
+                    <li *ngFor="let c of clientesMaisFrequentes | slice:0:3" class="flex justify-between">
+                        <span>{{ c.nome }}</span>
+                        <span class="text-green-700">{{ c.quantidade }} compras</span>
+                    </li>
+                </ul>
+                <p *ngIf="clientesMaisFrequentes.length === 0" class="text-sm text-gray-600">Nenhum cliente frequente
+                    encontrado.</p>
+            </div>
+
+            <!-- Produtos Populares -->
+            <div class="p-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-600">Produtos Mais Vendidos</p>
+                    <div class="p-2 bg-purple-500 bg-opacity-20 rounded-full">
+                        <i class="fa-solid fa-crown text-purple-800"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold">{{ produtosMaisVendidos.length }} produtos</h3>
+                <ul class="mt-2 text-sm" *ngIf="produtosMaisVendidos.length > 0">
+                    <li *ngFor="let p of produtosMaisVendidos | slice:0:3" class="flex justify-between">
+                        <span>{{ p.nome }}</span>
+                        <span class="text-purple-700">{{ p.total | currency:'BRL' }}</span>
+                    </li>
+                </ul>
+                <p *ngIf="produtosMaisVendidos.length === 0" class="text-sm text-gray-600">Nenhuma venda no período.</p>
+            </div>
+        </div>
+
+        <!-- Gráfico e Tabelas -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"> <!-- Gráfico de Vendas -->
+            <!-- <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 class="font-medium text-gray-700 mb-4">Vendas dos Últimos 7 Dias</h3>
+                <div class="h-64">
+                    <div class="flex h-full items-end space-x-2">
+                        <ng-container *ngFor="let data of dadosGrafico.datasets[0].data; let i = index">
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="bg-blue-500 w-full"
+                                    [style.height.%]="data && dadosGrafico.datasets[0].data.length ? (data / Math.max(...dadosGrafico.datasets[0].data) * 80) : 0">
+                                </div>
+                                <span class="text-xs mt-1 text-gray-600 w-full text-center truncate">
+                                    {{ dadosGrafico.labels[i] }}
+                                </span>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div> -->
+            <!-- Produtos Mais Vendidos -->
+            <!-- <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 class="font-medium text-gray-700 mb-4">Top Produtos (7 dias)</h3>
+
+                <div class="space-y-3">
+                    <div *ngFor="let produto of produtosMaisVendidos | slice:0:5"
+                        class="relative hover:bg-gray-50 p-1 rounded transition-all cursor-default"
+                        [title]="'Produto: ' + produto.nome + '\nQuantidade: ' + produto.quantidade + ' ' + (produto.unidade_medida || 'un') + '\nValor: ' + (produto.total | currency:'BRL')">
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium truncate max-w-[70%]" [title]="produto.nome">{{ produto.nome
+                                }}</span>
+                            <span>{{ produto.total | currency:'BRL' }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-1.5">
+                            <div class="bg-blue-500 h-2 rounded-full"
+                                [style.width.%]="produto.total / (produtosMaisVendidos[0]?.total || 1) * 100"></div>
+                        </div>
+                        <div class="text-xs text-gray-500 flex justify-between mt-1">
+                            <span>{{ produto.quantidade }} {{ produto.unidade_medida || 'un' }}</span>
+                            <span>{{ (produto.total / (produtosMaisVendidos[0]?.total || 1) * 100).toFixed(0) }}%</span>
+                        </div>
+                    </div>
+
+                    <p *ngIf="produtosMaisVendidos.length === 0" class="text-sm text-gray-500 py-4 text-center">
+                        Não há dados de vendas para exibir.
+                    </p>
+                </div>
+            </div> -->
+        </div> <!-- Tabela de Vendas Recentes -->
+        <!-- <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-medium text-gray-700">Vendas Recentes</h3>
+        <button (click)="navegarPara('/vendas')" 
+          class="text-sm text-blue-500 hover:text-blue-700 flex items-center">
+          Ver todas 
+          <i class="fa-solid fa-angle-right ml-1"></i>
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-blue-100">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Data
+              </th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Produtos
+              </th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                Valor Total
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let venda of vendasSemanais.slice(0, 5)" 
+                class="hover:bg-blue-50 transition-colors cursor-pointer" 
+                (click)="navegarPara('/vendas')"
+                [title]="'Cliente: ' + venda.cliente + '\nData: ' + formatarData(venda.data) + '\nItems: ' + venda.produtos.length + '\nValor: ' + (venda.valor_total | currency:'BRL')">
+              <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-800">
+                {{ venda.cliente }}
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                {{ formatarData(venda.data) }}
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                  {{ venda.produtos.length }} item(ns)
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-gray-800">
+                {{ venda.valor_total | currency:'BRL' }}
+              </td>
+            </tr>
+            <tr *ngIf="vendasSemanais.length === 0">
+              <td colspan="4" class="px-4 py-8 text-sm text-center text-gray-500">
+                <div class="flex flex-col items-center justify-center">
+                  <i class="fa-solid fa-receipt text-gray-300 text-3xl mb-3"></i>
+                  <p>Nenhuma venda recente encontrada.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div> -->
+    </div>
+</div>

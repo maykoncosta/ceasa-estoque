@@ -21,6 +21,9 @@ import { getStorage, provideStorage } from '@angular/fire/storage';
 import { environment } from '../environments/environment';
 import { CurrencyPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
+import { VendaComponent } from './pages/venda/venda.component';
+import { RelatorioComponent } from './pages/relatorio/relatorio.component';
+import { RelatorioModule } from './pages/relatorio/relatorio.module';
 
 registerLocaleData(localePt);
 
@@ -32,7 +35,8 @@ registerLocaleData(localePt);
     MessageComponent,
     LoaderComponent,
     ConfirmModalComponent,
-    UnidadeMedidaComponent
+    UnidadeMedidaComponent,
+    VendaComponent,
   ],
   imports: [
     BrowserModule,
@@ -43,6 +47,7 @@ registerLocaleData(localePt);
     ReactiveFormsModule,
     FontAwesomeModule,
     CurrencyPipe,
+    RelatorioModule,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideFirestore(() => getFirestore()),
     provideAuth(() => getAuth()),

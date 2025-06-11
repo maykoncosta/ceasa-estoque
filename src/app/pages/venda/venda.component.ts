@@ -80,17 +80,32 @@ export class VendaComponent implements OnInit {
       this.loaderService.showLoading();
       let valorTotal: number = 0;
       venda.produtos.forEach(p => {
-        valorTotal = Number(p.total) + Number(valorTotal)
+        valorTotal = Number(p.total) + Number(valorTotal);
       });
 
       venda.valor_total = valorTotal;
-      this.loaderService.closeLoading();
-      
+
+      const atualizarEstoque = async () => {
+        for (const produto of venda.produtos) {
+          const produtoAtual = this.produtos.find(p => p.id === produto.produto_id);
+          if (produtoAtual) {
+            const novoEstoque = produtoAtual.estoque - produto.quantidade;
+            if (novoEstoque < 0) {
+              this.loaderService.closeLoading();
+              this.messageService.error(`Estoque insuficiente para o produto: ${produtoAtual.nome}`);
+              return;
+            }
+            await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
+          }
+        }
+      };
+
       if (this.onEdit) {
         // Preserve o ID da venda para atualização
         const vendaId = venda.id;
         
-        this.vendaService.atualizarVenda(vendaId, venda).then(() => {
+        this.vendaService.atualizarVenda(vendaId, venda).then(async () => {
+          await atualizarEstoque();
           this.aposSalvar();
           this.listarVendas(); // Atualizar a lista de vendas após salvar
         }).catch(error => {
@@ -99,7 +114,8 @@ export class VendaComponent implements OnInit {
           console.error('Erro ao atualizar venda:', error);
         });
       } else {
-        this.vendaService.criarVenda(venda)?.then(() => {
+        this.vendaService.criarVenda(venda)?.then(async () => {
+          await atualizarEstoque();
           this.aposSalvar();
           this.listarVendas(); // Atualizar a lista de vendas após salvar
         }).catch((error) => {
@@ -162,8 +178,8 @@ export class VendaComponent implements OnInit {
   onSelectProduto() {
     const produtoSelecionado = this.form.get('produto')?.value;
     if (produtoSelecionado) {
-      // Preencher o preço do produto automaticamente
-      this.form.get('preco')?.setValue(produtoSelecionado.preco);
+      // Preencher o preço de venda do produto automaticamente
+      this.form.get('preco')?.setValue(produtoSelecionado.preco_venda);
       
       // Preencher a unidade de medida automaticamente
       if (produtoSelecionado.unidadeMedida) {
@@ -185,7 +201,6 @@ export class VendaComponent implements OnInit {
   }
 
   adicionarProduto() {
-    // Verificar se todos os campos necessários estão preenchidos
     const produto = this.form.get('produto')?.value;
     const quantidade = this.form.get('quantidade')?.value;
     const preco = this.form.get('preco')?.value;
@@ -206,9 +221,10 @@ export class VendaComponent implements OnInit {
       produto_id: produto.id,
       nome: produto.nome,
       quantidade: quantidade,
-      preco_unitario: preco,
+      preco_compra: produto.preco_compra, // Use preco_compra
+      preco_venda: preco, // Use preco_venda
       unidade_medida: unidadeMedida,
-      total: preco * quantidade
+      total: preco * quantidade // Calculate total using preco  
     };
     
     // Adicionar à lista

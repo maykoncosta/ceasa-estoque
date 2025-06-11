@@ -45,7 +45,7 @@
                                         <tr *ngFor="let p of venda.produtos" class="border-b hover:bg-blue-50">
                                             <td class="p-2 text-sm">{{ p.nome }}</td>
                                             <td class="p-2 text-sm">{{ p.quantidade }}</td>
-                                            <td class="p-2 text-sm">{{ p.preco_unitario | currency: 'R$' }}</td>
+                                            <td class="p-2 text-sm">{{ p.preco_venda | currency: 'R$' }}</td>
                                             <td class="p-2 text-sm">{{ p.unidade_medida }}</td>
                                             <td class="p-2 text-sm">{{ p.total | currency: 'R$' }}</td>
                                         </tr>
@@ -95,6 +95,7 @@
                                     <th class="p-2 text-left text-sm font-medium">Preço</th>
                                     <th class="p-2 text-left text-sm font-medium">Unid.</th>
                                     <th class="p-2 text-left text-sm font-medium">Total</th>
+                                    <th class="p-2 text-left text-sm font-medium">Lucro</th>
                                     <th class="p-2 text-center text-sm font-medium">Ações</th>
                                 </tr>
                             </thead>
@@ -102,9 +103,10 @@
                                 <tr class="border-b hover:bg-gray-50" *ngFor="let produto of produtosVenda; let i = index">
                                     <td class="p-2 text-sm min-w-[120px]">{{produto.nome}}</td>
                                     <td class="p-2 text-sm min-w-[60px]">{{produto.quantidade}}</td>
-                                    <td class="p-2 text-sm min-w-[80px]">{{produto.preco_unitario | currency: 'R$'}}</td>
+                                    <td class="p-2 text-sm min-w-[80px]">{{produto.preco_venda | currency: 'R$'}}</td>
                                     <td class="p-2 text-sm min-w-[60px]">{{produto.unidade_medida}}</td>
                                     <td class="p-2 text-sm min-w-[80px]">{{produto.total | currency: 'R$'}}</td>
+                                    <td class="p-2 text-sm min-w-[80px]">{{ (produto.preco_venda - produto.preco_compra) * produto.quantidade | currency: 'R$' }}</td>
                                     <td class="p-2 flex justify-center gap-2">
                                         <button type="button" class="text-red-500 hover:text-red-700 bg-transparent border-0" (click)="removerProduto(i)" title="Remover">
                                             <i class="fa-solid fa-trash"></i>
@@ -121,7 +123,7 @@
                     </div>
                 </div>
             </fieldset>
-            <div class="bg-gradient-to-r from-blue-300 to-[#E8F0FE] rounded-md p-3 mt-4 shadow-inner">
+            <div class="bg-gradient-to-r from-blue-300 to-[#E8F0FE] rounded-md p-3 mt-4 shadow-inner col-span-6">
                 <h4 class="font-medium text-blue-800 mb-3">Adicionar Produto</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div class="flex flex-col">

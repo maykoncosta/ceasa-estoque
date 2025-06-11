@@ -32,7 +32,8 @@ export class ProdutoComponent implements OnInit {
       id: new UntypedFormControl({ value: '', disabled: true }),
       nome: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(15)])),
       estoque: new UntypedFormControl(undefined, Validators.compose([Validators.required])),
-      preco: new UntypedFormControl(undefined, Validators.required),
+      preco_compra: new UntypedFormControl(undefined, Validators.required),
+      preco_venda: new UntypedFormControl(undefined, Validators.required),
       unidadeMedida: new UntypedFormControl(undefined, Validators.required),
     });
     this.loaderService.showLoading();

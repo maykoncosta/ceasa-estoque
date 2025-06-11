@@ -65,6 +65,19 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Card Lucro Total -->
+            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-md p-4 shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Lucro Total</h3>
+                        <p class="text-3xl font-bold">{{formatarMoeda(resumo.lucro_total)}}</p>
+                    </div>
+                    <div class="rounded-full p-3 bg-yellow-600">
+                        <i class="fa-solid fa-chart-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Produtos mais vendidos -->
@@ -105,6 +118,45 @@
                                 <td colspan="5" class="p-4 text-center text-gray-500">
                                     Nenhum produto vendido no período selecionado
                                 </td>
+                            </tr>
+                        </ng-template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Produtos mais lucrativos -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-4">Produtos Mais Lucrativos</h2>
+            <div class="bg-white rounded-md shadow-sm overflow-hidden">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-yellow-100">
+                            <th class="p-2 text-left text-sm font-medium">Produto</th>
+                            <th class="p-2 text-left text-sm font-medium">Lucro</th>
+                            <th class="p-2 text-left text-sm font-medium">% do Lucro Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <ng-container *ngIf="resumo.produtos_mais_lucrativos.length > 0; else semProdutos">
+                            <tr *ngFor="let produto of resumo.produtos_mais_lucrativos" class="border-b hover:bg-gray-50">
+                                <td class="p-2 text-sm">{{produto.nome}}</td>
+                                <td class="p-2 text-sm">{{formatarMoeda(produto.lucro_total)}}</td>
+                                <td class="p-2 text-sm">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-yellow-600 h-2 rounded-full" 
+                                                [style.width]="calcularPercentualLucro(produto.lucro_total) + '%'">
+                                            </div>
+                                        </div>
+                                        <span>{{calcularPercentualLucro(produto.lucro_total).toFixed(1)}}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-container>
+                        <ng-template #semProdutos>
+                            <tr>
+                                <td colspan="3" class="p-4 text-center text-gray-500">Nenhum produto lucrativo encontrado.</td>
                             </tr>
                         </ng-template>
                     </tbody>

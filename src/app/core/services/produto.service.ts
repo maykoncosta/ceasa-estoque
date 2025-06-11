@@ -8,7 +8,8 @@ export interface Produto {
   empresa_id: string;
   id: string;
   nome: string;
-  preco: number;
+  preco_compra: number;
+  preco_venda: number;
   estoque: number;
   unidadeMedida: UnidadeMedida
 }
@@ -26,6 +27,7 @@ export class ProdutoService {
 
     const produtosRef = collection(this.firestore, 'produtos');
     const q = query(produtosRef, where('empresa_id', '==', user.uid));
+    
     return collectionData(q, { idField: 'id' }) as Observable<Produto[]>;
   }
 

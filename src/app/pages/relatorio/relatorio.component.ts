@@ -21,8 +21,10 @@ interface ClienteInfo {
 interface ResumoVendas {
   total_vendas: number;
   valor_total: number;
+  lucro_total: number; // Novo campo
   media_por_venda: number;
   produtos_mais_vendidos: ProdutoVendido[];
+  produtos_mais_lucrativos: (ProdutoVendido & { lucro_total: number })[]; // Novo campo
   vendas_por_dia: { data: string, valor: number, quantidade: number }[];
   clientes_mais_frequentes: ClienteInfo[];
   analise_mensal: { mes: string, valor: number, quantidade: number }[];
@@ -40,8 +42,10 @@ export class RelatorioComponent implements OnInit {
   resumo: ResumoVendas = {
     total_vendas: 0,
     valor_total: 0,
+    lucro_total: 0, // Novo campo
     media_por_venda: 0,
     produtos_mais_vendidos: [],
+    produtos_mais_lucrativos: [], // Novo campo
     vendas_por_dia: [],
     clientes_mais_frequentes: [],
     analise_mensal: []
@@ -142,40 +146,54 @@ export class RelatorioComponent implements OnInit {
     // Calcula total de vendas e valor total
     const totalVendas = vendasFiltradas.length;
     const valorTotal = vendasFiltradas.reduce((sum, venda) => sum + venda.valor_total, 0);
+    const lucroTotal = vendasFiltradas.reduce((sum, venda) => {
+      const lucroVenda = venda.produtos.reduce((lucro, produto) => {
+        console.log(lucro, produto);
+        const precoCompra = produto.preco_compra || 0;
+        const precoVenda = produto.preco_venda || 0;
+        return lucro + (precoVenda - precoCompra) * produto.quantidade;
+      }, 0);
+      return sum + lucroVenda;
+    }, 0); // Novo cálculo
     const mediaPorVenda = totalVendas > 0 ? valorTotal / totalVendas : 0;
-    
-    // Calcula produtos mais vendidos
-    const produtosMap = new Map<string, ProdutoVendido>();
-    
+
+    // Calcula produtos mais lucrativos
+    const produtosMap = new Map<string, ProdutoVendido & { lucro_total: number }>();
+
     vendasFiltradas.forEach(venda => {
       venda.produtos.forEach(produto => {
+        const precoCompra = produto.preco_compra || 0;
+        const precoVenda = produto.preco_venda || 0;
+        const lucroProduto = (precoVenda - precoCompra) * produto.quantidade;
         if (produtosMap.has(produto.produto_id)) {
           const produtoExistente = produtosMap.get(produto.produto_id)!;
           produtoExistente.quantidade_total += produto.quantidade;
           produtoExistente.valor_total += produto.total;
+          produtoExistente.lucro_total += lucroProduto;
         } else {
           produtosMap.set(produto.produto_id, {
             produto_id: produto.produto_id,
             nome: produto.nome,
             quantidade_total: produto.quantidade,
             valor_total: produto.total,
+            lucro_total: lucroProduto,
             unidade_medida: produto.unidade_medida || ''
           });
         }
       });
     });
-    
-    // Converte o Map para array e ordena por quantidade total decrescente
-    const produtosMaisVendidos = Array.from(produtosMap.values())
-      .sort((a, b) => b.quantidade_total - a.quantidade_total);
-    
+
+    // Converte o Map para array e ordena por lucro total decrescente
+    const produtosMaisLucrativos = Array.from(produtosMap.values())
+      .sort((a, b) => b.lucro_total - a.lucro_total);
+
     // Calcula vendas por dia
     const vendasPorDiaMap = new Map<string, { valor: number, quantidade: number }>();
-    
+
     vendasFiltradas.forEach(venda => {
       const dataVenda = this.parsearData(venda.data);
       const dataFormatada = this.formatarData(dataVenda);
-      
+
       if (vendasPorDiaMap.has(dataFormatada)) {
         const dadosAnteriores = vendasPorDiaMap.get(dataFormatada)!;
         vendasPorDiaMap.set(dataFormatada, {
@@ -189,7 +207,7 @@ export class RelatorioComponent implements OnInit {
         });
       }
     });
-    
+
     // Converte o Map para array e ordena por data
     const vendasPorDia = Array.from(vendasPorDiaMap.entries())
       .map(([data, dados]) => ({ data, valor: dados.valor, quantidade: dados.quantidade }))
@@ -245,11 +263,14 @@ export class RelatorioComponent implements OnInit {
     return {
       total_vendas: totalVendas,
       valor_total: valorTotal,
+      lucro_total: lucroTotal,
       media_por_venda: mediaPorVenda,
-      produtos_mais_vendidos: produtosMaisVendidos.slice(0, 10), // Top 10 produtos
+      produtos_mais_vendidos: Array.from(produtosMap.values())
+        .sort((a, b) => b.quantidade_total - a.quantidade_total),
+      produtos_mais_lucrativos: produtosMaisLucrativos,
       vendas_por_dia: vendasPorDia,
-      clientes_mais_frequentes: clientesMaisFrequentes.slice(0, 5), // Top 5 clientes
-      analise_mensal: analisesMensal
+      clientes_mais_frequentes: [],
+      analise_mensal: []
     };
   }
 
@@ -457,6 +478,14 @@ export class RelatorioComponent implements OnInit {
   calcularPercentual(valorProduto: number): number {
     if (this.resumo.valor_total === 0) return 0;
     return (valorProduto / this.resumo.valor_total) * 100;
+  }
+
+  // Calcula o percentual de lucro em relação ao lucro total
+  calcularPercentualLucro(lucro: number): number {
+    if (!this.resumo || !this.resumo.lucro_total || this.resumo.lucro_total === 0) {
+      return 0;
+    }
+    return (lucro / this.resumo.lucro_total) * 100;
   }
   
 //   // Exportar dados para CSV

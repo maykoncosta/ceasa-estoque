@@ -10,11 +10,14 @@ export interface Venda{
     produto_id: string;
     nome: string;
     quantidade: number;
-    preco_unitario: number;
+    preco_compra: number;
+    preco_venda: number;
     unidade_medida?: string;
-    total: number
+    total: number;
+    lucro?: number;
   }]
   valor_total: number;
+  lucro_total?: number;
   data: any;
   cliente: string;
   expandido?: boolean

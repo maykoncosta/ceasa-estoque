@@ -24,6 +24,7 @@ import localePt from '@angular/common/locales/pt';
 import { VendaComponent } from './pages/venda/venda.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { RelatorioModule } from './pages/relatorio/relatorio.module';
+import { ContaComponent } from './pages/conta/conta.component';
 
 registerLocaleData(localePt);
 
@@ -37,6 +38,7 @@ registerLocaleData(localePt);
     ConfirmModalComponent,
     UnidadeMedidaComponent,
     VendaComponent,
+    ContaComponent,
   ],
   imports: [
     BrowserModule,

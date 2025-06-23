@@ -91,9 +91,7 @@ export class VendaComponent implements OnInit {
           if (produtoAtual) {
             const novoEstoque = produtoAtual.estoque - produto.quantidade;
             if (novoEstoque < 0) {
-              this.loaderService.closeLoading();
-              this.messageService.error(`Estoque insuficiente para o produto: ${produtoAtual.nome}`);
-              return;
+              this.messageService.info(`Estoque insuficiente para o produto: ${produtoAtual.nome}. Estoque atual: ${produtoAtual.estoque}, quantidade vendida: ${produto.quantidade}`);
             }
             await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
           }

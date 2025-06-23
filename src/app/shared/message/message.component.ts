@@ -7,7 +7,7 @@ import { Message, MessageService } from '../services/message.service';
   styleUrls: ['./message.component.css']
 })
 export class MessageComponent implements OnInit {
-  message: string = '';
+  messages: Message[] = [];
   type: 'success' | 'error' | 'info' = 'info';
   visible = false;
 
@@ -15,13 +15,18 @@ export class MessageComponent implements OnInit {
 
   ngOnInit(): void {
     this.messageService.message$.subscribe((msg: Message) => {
-      this.message = msg.text;
-      this.type = msg.type;
-      this.visible = true;
+      this.messages.push(msg);
 
       setTimeout(() => {
-        this.visible = false;
+        this.removeMessage(msg);
       }, msg.duration || 3000);
     });
+  }
+
+  removeMessage(msg: Message): void {
+    const index = this.messages.indexOf(msg);
+    if (index > -1) {
+      this.messages.splice(index, 1);
+    }
   }
 }

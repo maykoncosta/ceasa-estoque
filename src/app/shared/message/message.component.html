@@ -1,3 +1,5 @@
-<div *ngIf="visible" class="message-container" [ngClass]="type">
-    {{ message }}
+<div class="message-wrapper">
+  <div *ngFor="let msg of messages" class="message-container" [ngClass]="msg.type">
+    {{ msg.text }}
+  </div>
 </div>

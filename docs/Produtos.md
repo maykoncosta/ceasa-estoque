@@ -22,6 +22,12 @@ A interface de usuário para gerenciamento de produtos é composta pelos seguint
 
 - **Botão de Adicionar Produto**: Ícone "+" no cabeçalho da tabela que inicia o processo de criação de um novo produto.
 
+- **Controles de Paginação**: Sistema de paginação que permite navegar entre diferentes páginas de produtos quando a lista é extensa. Inclui:
+  - Indicador de página atual (ex: "Página 1 de 5")
+  - Botões de navegação (primeira página, anterior, próxima)
+  - Seletor de quantidade de itens por página (5, 10, 20, 50)
+  - Indicador de total de itens (ex: "Mostrando 1 a 10 de 47 produtos")
+
 ### Formulário de Produto
 
 O formulário para criação/edição de produtos contém os seguintes campos:
@@ -40,9 +46,11 @@ Todos os campos possuem validação visual que destaca erros quando o campo obri
 
 **Fluxo básico:**
 1. Usuário acessa a página de produtos
-2. Sistema carrega a lista de produtos do banco de dados (Firestore)
+2. Sistema carrega a primeira página de produtos do banco de dados (Firestore)
 3. Sistema exibe os produtos na tabela com formatação adequada
 4. Sistema destaca produtos com estoque baixo/zerado em vermelho
+5. Usuário pode navegar entre as páginas usando os controles de paginação
+6. Usuário pode alterar o número de itens exibidos por página
 
 ### 2. Criação de Produto
 
@@ -59,6 +67,7 @@ Todos os campos possuem validação visual que destaca erros quando o campo obri
 5. Sistema valida os dados inseridos
 6. Sistema envia os dados para o Firestore
 7. Sistema atualiza a tabela de produtos e exibe mensagem de sucesso
+8. Sistema retorna para a primeira página da listagem
 
 **Fluxo alternativo (dados inválidos):**
 1. Se algum campo obrigatório não for preenchido, o sistema exibe mensagem de erro
@@ -79,6 +88,7 @@ Todos os campos possuem validação visual que destaca erros quando o campo obri
 5. Sistema valida os dados
 6. Sistema atualiza os dados no Firestore
 7. Sistema atualiza a tabela de produtos e exibe mensagem de sucesso
+8. Sistema atualiza a página atual da listagem
 
 ### 4. Exclusão de Produto
 
@@ -88,12 +98,29 @@ Todos os campos possuem validação visual que destaca erros quando o campo obri
 3. Usuário confirma a exclusão
 4. Sistema remove o produto do Firestore
 5. Sistema atualiza a tabela de produtos e exibe mensagem de sucesso
+6. Sistema atualiza a página atual da listagem ou retorna à página anterior se necessário
 
 **Fluxo alternativo (cancelamento):**
 1. Usuário cancela a exclusão no modal de confirmação
 2. Sistema fecha o modal sem realizar alterações
 
-### 5. Validação de Campos
+### 5. Paginação de Produtos
+
+**Fluxo básico:**
+1. Sistema carrega a primeira página de produtos ao iniciar
+2. Usuário visualiza os controles de paginação abaixo da tabela
+3. Usuário pode navegar para a próxima página, página anterior ou primeira página
+4. Usuário pode alterar o número de itens exibidos por página
+5. Sistema atualiza a visualização da tabela ao mudar de página
+6. Sistema exibe informações sobre os itens sendo exibidos (ex: "Mostrando 1 a 10 de 47 produtos")
+
+**Fluxo alternativo (última página):**
+1. Se o usuário estiver na última página, o botão de próxima página é desabilitado
+
+**Fluxo alternativo (primeira página):**
+1. Se o usuário estiver na primeira página, o botão de página anterior é desabilitado
+
+### 6. Validação de Campos
 
 - O sistema valida campos obrigatórios quando o usuário tenta salvar o produto
 - A função `hasFieldError` é utilizada para verificar condições de erro nos campos

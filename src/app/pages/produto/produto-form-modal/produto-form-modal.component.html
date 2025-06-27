@@ -1,0 +1,61 @@
+<div class="modal-backdrop" *ngIf="show">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">{{ isEdit ? 'Editar Produto' : 'Cadastrar Produto' }}</h2>
+            <button class="text-gray-600 hover:text-gray-900 bg-transparent border-none shadow-none outline-none" (click)="onCancel()" style="background: none;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <form (ngSubmit)="onSave()" [formGroup]="form" #profileForm="ngForm"
+            class="grid grid-cols-4 gap-4 items-center" validate>
+            <div class="flex flex-col col-span-4 md:col-span-2">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" formControlName="nome" name="nome"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+                <small *ngIf="hasFieldError(form, 'nome', 'required', profileForm)" class="text-red-500 mt-1">Nome
+                    é obrigatório</small>
+            </div>
+            <div class="flex flex-col col-span-4 md:col-span-2">
+                <label for="estoque">Estoque</label>
+                <input type="number" id="estoque"
+                    oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);" formControlName="estoque"
+                    name="estoque" class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+                <small *ngIf="hasFieldError(form, 'estoque', 'required', profileForm)" class="text-red-500 mt-1">Estoque
+                    é obrigatório</small>
+            </div>
+            <div class="flex flex-col col-span-2 md:col-span-1">
+                <label for="preco_compra">Preço de Compra</label>
+                <input type="number" id="preco_compra" formControlName="preco_compra" name="preco_compra"
+                    oninput="if(this.value.length > 7) this.value = this.value.slice(0,7);"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+                <small *ngIf="hasFieldError(form, 'preco_compra', 'required', profileForm)"
+                    class="text-red-500 mt-1">Preço de compra é obrigatório</small>
+            </div>
+            <div class="flex flex-col col-span-2 md:col-span-1">
+                <label for="preco_venda">Preço de Venda</label>
+                <input type="number" id="preco_venda" formControlName="preco_venda" name="preco_venda"
+                    oninput="if(this.value.length > 7) this.value = this.value.slice(0,7);"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
+                <small *ngIf="hasFieldError(form, 'preco_venda', 'required', profileForm)"
+                    class="text-red-500 mt-1">Preço de venda é obrigatório</small>
+            </div>
+            <div class="flex flex-col col-span-4 md:col-span-2">
+                <label for="unidadeMedida">Unidade de Medida</label>
+                <select id="dropdown" class="mt-2 border border-gray-300 rounded-md px-3 py-2"
+                    formControlName="unidadeMedida">
+                    <option *ngFor="let unidade of unidades" [value]="unidade.nome" required>{{ unidade.nome }}</option>
+                </select>
+                <small *ngIf="hasFieldError(form, 'unidadeMedida', 'required', profileForm)"
+                    class="text-red-500 mt-1">Unidade de medida é obrigatória</small>
+            </div>
+            <div class="col-span-4 flex gap-4 mt-4">
+                <button type="submit" class="p-2 flex-1 bg-blue-500 hover:bg-blue-600 text-white focus:outline-2 
+                focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md">Salvar</button>
+
+                <button type="button" (click)="onCancel()" class="p-2 flex-1 bg-red-500 hover:bg-red-600 text-white focus:outline-2 
+                focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>

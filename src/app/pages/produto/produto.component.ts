@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
+import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-produto',
@@ -12,9 +13,10 @@ import { MessageService } from 'src/app/shared/services/message.service';
   styleUrls: ['./produto.component.css']
 })
 export class ProdutoComponent extends BaseComponent<Produto> {
-  produtos: Produto[] = [];
   unidades: any[] = [];
-
+  showFormModal = false;
+  selectedProduto: Produto | null = null;
+  
   constructor(
     messageService: MessageService,
     loaderService: LoaderService,
@@ -22,6 +24,15 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     private unidadeService: UnidadeMedidaService
   ) {
     super(loaderService, messageService);
+  }
+
+  override initializePaginationConfig(): void {
+    this.paginationConfig = { 
+      pageSize: 5, 
+      orderByField: 'nome' 
+    };
+    this.pageSize = this.paginationConfig.pageSize;
+    this.pageSizeOptions = [5, 10, 20, 50];
   }
 
   override onLoadValues(): void {
@@ -41,9 +52,19 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     });
   }
 
+  // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
+  override async buscarItensPaginados(
+    pageSize: number, 
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+    searchTerm?: string
+  ) {
+    return this.produtoService.buscarProdutosPaginados(pageSize, startAfterDoc, searchTerm);
+  }
+
+  // Método mantido para compatibilidade com o BaseComponent
   override listarItens(): void {
     this.produtoService.listarProdutos().subscribe(data => {
-      this.produtos = data;
+      this.items = data;
       this.loaderService.closeLoading();
     });
   }
@@ -76,15 +97,56 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     }
   }
 
+  // Método para lidar com a exclusão de produtos
   onDeleteItem(): void {
     this.deleteItem(() => this.produtoService.excluirProduto(this.itemToDelete!.id));
   }
 
-  aposSalvar(): void {
-    this.listarItens();
-    this.onCreate = false;
-    this.onEdit = false;
+  // Métodos para gerenciar o modal de formulário
+  openFormModal(isEdit: boolean, produto?: Produto): void {
+    this.onEdit = isEdit;
+    this.onCreate = !isEdit;
+    this.selectedProduto = produto || null;
     this.form.reset();
+    
+    if (isEdit && produto) {
+      this.form.patchValue(produto);
+    }
+    
+    this.showFormModal = true;
+  }
+
+  closeFormModal(): void {
+    this.showFormModal = false;
+    this.onEdit = false;
+    this.onCreate = false;
+    this.selectedProduto = null;
+    this.form.reset();
+  }
+
+  // Sobrescrevendo os métodos do BaseComponent
+  override onCreateItem(): void {
+    this.openFormModal(false);
+  }
+
+  override onEditItem(item: Produto): void {
+    this.openFormModal(true, item);
+  }
+
+  override onCancel(): void {
+    this.closeFormModal();
+  }
+
+  // Sobrescrevendo o método para salvar e controlar o modal
+  override aposSalvar(): void {
+    this.listarItensPaginados();
+    this.closeFormModal();
     this.messageService.success();
+  }
+
+  // Método para salvar o produto do formulário modal
+  saveProdutoFromModal(produto: Produto): void {
+    // Reutiliza a lógica existente
+    this.saveItem();
   }
 }

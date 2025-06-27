@@ -1,6 +1,25 @@
 <div class="mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-2 sm:p-1 md:p-4">
     <div class="flex flex-col">
         <h1 class="text-xl p-4 font-bold">PRODUTOS</h1>
+
+        <!-- Campo de busca -->
+        <div class="flex flex-col md:flex-row items-center mb-4 px-2">
+            <div class="flex flex-1 w-full md:w-auto">
+                <input type="text" placeholder="Buscar produto por nome..."
+                    class="border rounded-l px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [(ngModel)]="searchTerm">
+                <button class="bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 focus:outline-none"
+                    (click)="buscarPorTermo(searchTerm)">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+                <button class="bg-gray-300 text-gray-700 px-4 py-2 rounded-r hover:bg-gray-400 focus:outline-none"
+                    (click)="limparBusca()" [disabled]="!searchTerm"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': !searchTerm}">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
         <table class="border-collapse shadow-sm rounded-lg">
             <thead>
                 <tr class="border-b-2 bg-blue-100">
@@ -15,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr class="border-b-2" *ngFor="let produto of produtos">
+                <tr class="border-b-2" *ngFor="let produto of items">
                     <td class="sm:p-1 text-left text-sm md:text-base lg:text-base">{{produto.nome}}</td>
                     <td class="sm:p-1 text-left text-sm md:text-base lg:text-base"
                         [ngClass]="{'text-red-600' : produto.estoque <= 0}">
@@ -28,64 +47,74 @@
                         <i class="fa-solid fa-trash cursor-pointer" (click)="showModalDelete(produto)"></i>
                     </td>
                 </tr>
+                <!-- Mensagem quando não houver produtos -->
+                <tr *ngIf="items.length === 0">
+                    <td colspan="6" class="text-center py-4 text-gray-500">
+                        <span>Nenhum produto encontrado</span>
+                    </td>
+                </tr>
             </tbody>
         </table>
-    </div>
-    <div *ngIf="onEdit || onCreate" class="bg-blue-100 mt-4 p-2 rounded-md shadow-md">
-        <h2 *ngIf="onEdit" class="text-xl font-semibold">Editar Produto</h2>
-        <h2 *ngIf="onCreate" class="text-xl font-semibold">Cadastrar Produto</h2>
-        <form (ngSubmit)="saveItem()" (reset)="onCancel()" [formGroup]="form" #profileForm="ngForm"
-            class="grid grid-cols-4 gap-4 items-center" validate>
-            <div class="flex flex-col mt-4 col-span-4 md:col-span-2">
-                <label for="nome">Nome</label>
-                <input type="text" id="nome" formControlName="nome" name="nome"
-                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
-                <small *ngIf="hasFieldError(form, 'nome', 'required', profileForm)" class="text-red-500 mt-1">Nome
-                    é obrigatório</small>
-            </div>
-            <div class="flex flex-col md:mt-4 col-span-4 md:col-span-2">
-                <label for="estoque">Estoque</label>
-                <input type="number" id="estoque"
-                    oninput="if(this.value.length > 6) this.value = this.value.slice(0,6);" formControlName="estoque"
-                    name="estoque" class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
-                <small *ngIf="hasFieldError(form, 'estoque', 'required', profileForm)" class="text-red-500 mt-1">Estoque
-                    é obrigatório</small>
-            </div>
-            <div class="flex flex-col md:mt-4 col-span-2 md:col-span-1">
-                <label for="preco_compra">Preço de Compra</label>
-                <input type="number" id="preco_compra" formControlName="preco_compra" name="preco_compra"
-                    oninput="if(this.value.length > 7) this.value = this.value.slice(0,7);"
-                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
-                <small *ngIf="hasFieldError(form, 'preco_compra', 'required', profileForm)"
-                    class="text-red-500 mt-1">Preço de compra é obrigatório</small>
-            </div>
-            <div class="flex flex-col md:mt-4 col-span-2 md:col-span-1">
-                <label for="preco_venda">Preço de Venda</label>
-                <input type="number" id="preco_venda" formControlName="preco_venda" name="preco_venda"
-                    oninput="if(this.value.length > 7) this.value = this.value.slice(0,7);"
-                    class="mt-2 border border-gray-300 rounded-md px-3 py-2" required>
-                <small *ngIf="hasFieldError(form, 'preco_venda', 'required', profileForm)"
-                    class="text-red-500 mt-1">Preço de venda é obrigatório</small>
-            </div>
-            <div class="flex flex-col md:mt-4 col-span-4 md:col-span-1">
-                <label for="unidadeMedida">Unidade de Medida</label>
-                <select id="dropdown" class="mt-2 border border-gray-300 rounded-md px-3 py-2"
-                    formControlName="unidadeMedida">
-                    <option *ngFor="let unidade of unidades" [value]="unidade.nome" required>{{ unidade.nome }}</option>
-                </select>
-                <small *ngIf="hasFieldError(form, 'unidadeMedida', 'required', profileForm)"
-                    class="text-red-500 mt-1">Unidade de medida é obrigatória</small>
-            </div>
-            <div class="col-span-4 flex gap-4">
-                <button type="submit" class="p-2 flex-1 m-2 bg-blue-500 hover:bg focus:outline-2 
-                focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md align-left">Salvar</button>
 
-                <button type="reset" class="p-2 flex-1 m-2 bg-red-500 hover:bg focus:outline-2 
-                focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md align-left">Cancelar</button>
+        <!-- Controles de Paginação -->
+        <div class="flex flex-col md:flex-row justify-between items-center mt-4 px-2">
+            <!-- Informação da página -->
+            <div class="text-sm text-gray-600 mb-2 md:mb-0">
+                <span *ngIf="totalItems > 0">
+                    Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, totalItems)
+                    }} de {{ totalItems }} produtos
+                </span>
+                <span *ngIf="totalItems === 0">
+                    Nenhum resultado encontrado
+                </span>
             </div>
-        </form>
+
+            <!-- Navegação entre páginas -->
+            <div class="flex items-center space-x-2" *ngIf="totalItems > 0">
+                <!-- Botão para primeira página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                    (click)="primeiraPagina()">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+
+                <!-- Botão para página anterior -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                    (click)="paginaAnterior()">
+                    <i class="fa-solid fa-angle-left"></i>
+                </button>
+
+                <!-- Indicador de página atual -->
+                <span class="px-3 py-1">
+                    Página {{ currentPage }} de {{ totalPages || 1 }}
+                </span>
+
+                <!-- Botão para próxima página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage >= totalPages"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage >= totalPages, 'cursor-pointer': currentPage < totalPages}"
+                    (click)="proximaPagina()">
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+            </div>
+
+            <!-- Seletor de itens por página -->
+            <div class="flex items-center space-x-2 mt-2 md:mt-0" *ngIf="totalItems > 0">
+                <span class="text-sm text-gray-600">Itens por página:</span>
+                <select class="border rounded px-2 py-1 text-sm" (change)="alterarTamanhoPagina($event)">
+                    <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">
+                        {{ size }}
+                    </option>
+                </select>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Modal para adicionar/editar produto -->
+<app-produto-form-modal [show]="showFormModal" [isEdit]="onEdit" [produto]="selectedProduto" [unidades]="unidades"
+    [form]="form" (save)="saveProdutoFromModal($event)" (cancel)="closeFormModal()">
+</app-produto-form-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">
 </app-confirm-modal>

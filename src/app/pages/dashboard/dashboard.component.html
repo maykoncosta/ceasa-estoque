@@ -60,7 +60,7 @@
                     <li *ngFor="let p of produtosBaixoEstoque | slice:0:3" class="flex justify-between items-center">
                         <span>{{ p.nome }}</span>
                         <span [ngClass]="p.estoque <= 5 ? 'text-red-700 font-bold' : 'text-amber-700'">
-                            {{ p.estoque }} {{ p.unidadeMedida?.nome }}
+                            {{ p.estoque }} {{ p.unidadeMedida.nome }}
                         </span>
                     </li>
                     <li *ngIf="produtosBaixoEstoque.length > 3" class="text-sm text-gray-600 italic mt-1">

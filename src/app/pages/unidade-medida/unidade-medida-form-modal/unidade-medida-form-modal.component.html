@@ -1,0 +1,43 @@
+<div class="modal-backdrop" *ngIf="show">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">{{ isEdit ? 'Editar Unidade de Medida' : 'Cadastrar Unidade de Medida' }}</h2>
+            <button class="text-gray-600 hover:text-gray-900 bg-transparent border-none shadow-none outline-none" (click)="onCancel()" style="background: none;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <form (ngSubmit)="onSave()" [formGroup]="form" #profileForm="ngForm"
+            class="grid grid-cols-4 gap-4 items-center" validate>
+            <div class="flex flex-col col-span-4 md:col-span-2">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" formControlName="nome" name="nome"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2"
+                    [ngClass]="{'bg-red-50 border-l-4 border-l-red-500 focus:bg-red-25 focus:outline-red-500': hasFieldError(form, 'nome', 'required', profileForm) || hasFieldError(form, 'nome', 'maxlength', profileForm)}"
+                    required>
+                <small *ngIf="hasFieldError(form, 'nome', 'required', profileForm)" class="text-red-500 mt-1">Nome
+                    é obrigatório</small>
+                <small *ngIf="hasFieldError(form, 'nome', 'maxlength', profileForm)" class="text-red-500 mt-1">Nome
+                    deve ter no máximo 20 caracteres</small>
+            </div>
+            <div class="flex flex-col col-span-4 md:col-span-2">
+                <label for="descricao">Descrição</label>
+                <input type="text" id="descricao" formControlName="descricao" name="descricao"
+                    class="mt-2 border border-gray-300 rounded-md px-3 py-2"
+                    [ngClass]="{'bg-red-50 border-l-4 border-l-red-500 focus:bg-red-25 focus:outline-red-500': hasFieldError(form, 'descricao', 'required', profileForm) || hasFieldError(form, 'descricao', 'maxlength', profileForm)}"
+                    required>
+                <small *ngIf="hasFieldError(form, 'descricao', 'required', profileForm)" class="text-red-500 mt-1">Descrição
+                    é obrigatória</small>
+                <small *ngIf="hasFieldError(form, 'descricao', 'maxlength', profileForm)" class="text-red-500 mt-1">Descrição
+                    deve ter no máximo 100 caracteres</small>
+            </div>
+            <div class="col-span-4 flex gap-4 mt-4">
+                <button type="submit" class="p-2 flex-1 bg-blue-500 hover:bg-blue-600 text-white focus:outline-2 
+                focus:outline-offset-2 focus:outline-blue-500 active:bg-blue-700 rounded-md">Salvar</button>
+
+                <button type="button" (click)="onCancel()" class="p-2 flex-1 bg-red-500 hover:bg-red-600 text-white focus:outline-2 
+                focus:outline-offset-2 focus:outline-red-500 active:bg-red-700 rounded-md">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>

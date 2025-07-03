@@ -1,71 +1,88 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { Venda, VendaService } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
+import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-venda',
   templateUrl: './venda.component.html',
   styleUrls: ['./venda.component.css']
 })
-export class VendaComponent implements OnInit {
-
-  onEdit: boolean = false;
-  onCreate: boolean = false;
-  form!: UntypedFormGroup;
-  showDeleteModal = false;
-  itemToDelete: Venda | any = undefined;
+export class VendaComponent extends BaseComponent<Venda> {
   produtos: Produto[] = [];
   unidades: any[] = [];
-  vendas: Venda[] = [];
   produtosVenda: any[] = [];
 
   constructor(
+    messageService: MessageService,
+    loaderService: LoaderService,
     private vendaService: VendaService,
-    private loaderService: LoaderService,
-    private messageService: MessageService,
     private produtoService: ProdutoService,
     private unidadeService: UnidadeMedidaService
-  ) { }
+  ) {
+    super(loaderService, messageService);
+  }
 
-  ngOnInit(): void {
+  override initializePaginationConfig(): void {
+    this.paginationConfig = { 
+      pageSize: 10, 
+      orderByField: 'data' 
+    };
+    this.pageSize = this.paginationConfig.pageSize;
+    this.pageSizeOptions = [5, 10, 20, 50];
+  }
+
+  override onLoadValues(): void {
+    this.unidadeService.listarUnidades().subscribe(data => {
+      this.unidades = data;
+    });
+
+    this.produtoService.listarProdutos().subscribe(data => {
+      this.produtos = data;
+    });
+  }
+
+  override initializeForm(): void {
     this.form = new UntypedFormGroup({
       id: new UntypedFormControl({ value: '', disabled: true }),
-      cliente: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(15)])),
-      produto: new UntypedFormControl(undefined, Validators.compose([Validators.required])),
+      cliente: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(50)])),
+      produto: new UntypedFormControl(undefined, Validators.required),
       quantidade: new UntypedFormControl(undefined, Validators.required),
       unidadeMedida: new UntypedFormControl(undefined, Validators.required),
       data: new UntypedFormControl(undefined, Validators.required),
       preco: new UntypedFormControl(undefined, Validators.required),
     });
-    this.listarVendas();
-    this.loadItems();
   }
 
-  listarVendas() {
+  // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
+  override async buscarItensPaginados(
+    pageSize: number, 
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+    searchTerm?: string
+  ) {
+    return this.vendaService.buscarVendasPaginadas(pageSize, startAfterDoc, searchTerm);
+  }
+
+  // Método para listagem simples (sem paginação) - mantido para compatibilidade
+  override listarItens(): void {
     this.vendaService.listarVendas().subscribe(data => {
-      this.vendas = data;
-      this.vendas.forEach(v => {
-      })
+      this.items = data;
       this.loaderService.closeLoading();
-    })
+    });
   }
 
-  loadItems() {
-    this.unidadeService.listarUnidades().subscribe(data => {
-      this.unidades = data;
-    })
+  override saveItem(): void {
+    if (this.form.invalid || this.produtosVenda.length === 0) {
+      this.messageService.info("Preencha todos os campos obrigatórios e adicione pelo menos um produto.");
+      return;
+    }
 
-    this.produtoService.listarProdutos().subscribe(data => {
-      this.produtos = data;
-    })
-  }
-
-  async registrarVenda() {
-    let venda: Venda = {
+    const venda: Venda = {
       produtos: this.produtosVenda,
       data: this.form.get('data')?.value,
       cliente: this.form.get('cliente')?.value
@@ -76,59 +93,51 @@ export class VendaComponent implements OnInit {
       venda.id = this.form.get('id')?.value;
     }
 
-    if (venda?.cliente.length > 0 && venda?.data && venda.produtos) {
-      this.loaderService.showLoading();
-      let valorTotal: number = 0;
-      venda.produtos.forEach(p => {
-        valorTotal = Number(p.total) + Number(valorTotal);
-      });
+    this.loaderService.showLoading();
+    let valorTotal: number = 0;
+    venda.produtos.forEach(p => {
+      valorTotal = Number(p.total) + Number(valorTotal);
+    });
 
-      venda.valor_total = valorTotal;
+    venda.valor_total = valorTotal;
 
-      const atualizarEstoque = async () => {
-        for (const produto of venda.produtos) {
-          const produtoAtual = this.produtos.find(p => p.id === produto.produto_id);
-          if (produtoAtual) {
-            const novoEstoque = produtoAtual.estoque - produto.quantidade;
-            if (novoEstoque < 0) {
-              this.messageService.info(`Estoque insuficiente para o produto: ${produtoAtual.nome}. Estoque atual: ${produtoAtual.estoque}, quantidade vendida: ${produto.quantidade}`);
-            }
-            await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
+    const atualizarEstoque = async () => {
+      for (const produto of venda.produtos) {
+        const produtoAtual = this.produtos.find(p => p.id === produto.produto_id);
+        if (produtoAtual) {
+          const novoEstoque = produtoAtual.estoque - produto.quantidade;
+          if (novoEstoque < 0) {
+            this.messageService.info(`Estoque insuficiente para o produto: ${produtoAtual.nome}. Estoque atual: ${produtoAtual.estoque}, quantidade vendida: ${produto.quantidade}`);
           }
+          await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
         }
-      };
-
-      if (this.onEdit) {
-        // Preserve o ID da venda para atualização
-        const vendaId = venda.id;
-        
-        this.vendaService.atualizarVenda(vendaId, venda).then(async () => {
-          await atualizarEstoque();
-          this.aposSalvar();
-          this.listarVendas(); // Atualizar a lista de vendas após salvar
-        }).catch(error => {
-          this.loaderService.closeLoading();
-          this.messageService.error();
-          console.error('Erro ao atualizar venda:', error);
-        });
-      } else {
-        this.vendaService.criarVenda(venda)?.then(async () => {
-          await atualizarEstoque();
-          this.aposSalvar();
-          this.listarVendas(); // Atualizar a lista de vendas após salvar
-        }).catch((error) => {
-          this.loaderService.closeLoading();
-          this.messageService.error();
-          console.error('Erro ao criar venda:', error);
-        });
       }
+    };
+
+    if (this.onEdit) {
+      const vendaId = venda.id;
+      this.vendaService.atualizarVenda(vendaId, venda).then(async () => {
+        await atualizarEstoque();
+        this.aposSalvar();
+      }).catch(error => {
+        this.loaderService.closeLoading();
+        this.messageService.error();
+        console.error('Erro ao atualizar venda:', error);
+      });
     } else {
-      this.messageService.info("Campos Obrigatórios Pendentes.")
+      this.vendaService.criarVenda(venda)?.then(async () => {
+        await atualizarEstoque();
+        this.aposSalvar();
+      }).catch((error) => {
+        this.loaderService.closeLoading();
+        this.messageService.error();
+        console.error('Erro ao criar venda:', error);
+      });
     }
   }
 
-  aposSalvar() {
-    this.listarVendas(); // Atualizar a lista de vendas
+  override aposSalvar(): void {
+    this.listarItensPaginados(); // Atualizar a lista de vendas com paginação
     this.produtosVenda = []; // Limpar os produtos adicionados
     this.onCreate = false;
     this.onEdit = false;
@@ -136,20 +145,21 @@ export class VendaComponent implements OnInit {
     this.messageService.success();
   }
 
-  onCancel() {
+  override onCancel(): void {
     this.onEdit = false;
     this.onCreate = false;
     this.produtosVenda = []; // Limpar os produtos adicionados ao cancelar
     this.form.reset();
   }
 
-  onCreateItem() {
+  override onCreateItem(): void {
     this.onCreate = true;
     this.onEdit = false;
     this.form.reset();
+    this.produtosVenda = []; // Limpar produtos ao criar nova venda
   }
 
-  onEditItem(venda: Venda) {
+  override onEditItem(venda: Venda): void {
     this.onEdit = true;
     this.onCreate = false;
     // Preencher o formulário com os dados básicos da venda
@@ -168,9 +178,9 @@ export class VendaComponent implements OnInit {
     }
   }
 
-  onDeleteItem(produto: Venda) {
-    this.showDeleteModal = true;
-    this.itemToDelete = produto;
+  // Método para lidar com a exclusão de vendas
+  onDeleteItem(): void {
+    this.deleteItem(() => this.vendaService.excluirVenda(this.itemToDelete!.id));
   }
 
   onSelectProduto() {
@@ -243,23 +253,7 @@ export class VendaComponent implements OnInit {
     }
   }
 
-  deleteItem() {
-    if (this.itemToDelete) {
-      this.loaderService.showLoading();
-      this.vendaService.excluirVenda(this.itemToDelete.id).then(() => {
-        this.itemToDelete = undefined;
-        this.showDeleteModal = false;
-        this.messageService.success();
-        this.listarVendas();
-      }).catch(() => {
-        this.messageService.error();
-      })
-    }
-  }
-
-
   toggleExpand(item: any) {
     item.expandido = !item.expandido;
   }
-
 }

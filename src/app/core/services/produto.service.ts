@@ -180,14 +180,26 @@ export class ProdutoService {
   adicionarProduto(produto: Produto) {
     const user = this.auth.currentUser;
     if (!user) return;
-    produto.empresa_id = user.uid;
+    
+    // Converter strings para uppercase antes de salvar
+    const produtoToSave = {
+      ...produto,
+      nome: produto.nome.toLocaleUpperCase(),
+      empresa_id: user.uid
+    };
 
-    return addDoc(collection(this.firestore, 'produtos'), produto);
+    return addDoc(collection(this.firestore, 'produtos'), produtoToSave);
   }
 
   async atualizarProduto(id: string, produto: Partial<Produto>) {
+    // Converter strings para uppercase antes de atualizar
+    const produtoToUpdate = { ...produto };
+    if (produtoToUpdate.nome) {
+      produtoToUpdate.nome = produtoToUpdate.nome.toLocaleUpperCase();
+    }
+
     const produtoDoc = doc(this.firestore, 'produtos', id);
-    let result = await updateDoc(produtoDoc, produto);
+    let result = await updateDoc(produtoDoc, produtoToUpdate);
     return result;
   }
 

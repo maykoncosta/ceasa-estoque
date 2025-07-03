@@ -32,7 +32,7 @@ export class LoginComponent {
         this.messageService.success('Login feito com sucesso!');
       })
       .catch(err => {
-        this.loaderService.closeLoading();
+        this.loaderService.closeLoading(); 
         this.messageService.error('Erro ao fazer login. Tente novamente.');
       });
     } else {

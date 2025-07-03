@@ -61,7 +61,7 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     return this.produtoService.buscarProdutosPaginados(pageSize, startAfterDoc, searchTerm);
   }
 
-  // Método mantido para compatibilidade com o BaseComponent
+  // Método para listagem simples (sem paginação) - mantido para compatibilidade
   override listarItens(): void {
     this.produtoService.listarProdutos().subscribe(data => {
       this.items = data;
@@ -139,7 +139,7 @@ export class ProdutoComponent extends BaseComponent<Produto> {
 
   // Sobrescrevendo o método para salvar e controlar o modal
   override aposSalvar(): void {
-    this.listarItensPaginados();
+    this.listarItensPaginados(); // Usa a paginação por padrão
     this.closeFormModal();
     this.messageService.success();
   }

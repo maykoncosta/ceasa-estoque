@@ -9,6 +9,7 @@ import { SidebarComponent } from './pages/sidebar/sidebar.component';
 import { ProdutoComponent } from './pages/produto/produto.component';
 import { ProdutoFormModalComponent } from './pages/produto/produto-form-modal/produto-form-modal.component';
 import { UnidadeMedidaFormModalComponent } from './pages/unidade-medida/unidade-medida-form-modal/unidade-medida-form-modal.component';
+import { ClienteFormModalComponent } from './pages/cliente/cliente-form-modal/cliente-form-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MessageComponent } from './shared/message/message.component';
@@ -24,6 +25,7 @@ import { environment } from '../environments/environment';
 import { CurrencyPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { VendaComponent } from './pages/venda/venda.component';
+import { ClienteComponent } from './pages/cliente/cliente.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { RelatorioModule } from './pages/relatorio/relatorio.module';
 import { ContaComponent } from './pages/conta/conta.component';
@@ -37,10 +39,12 @@ registerLocaleData(localePt);
     ProdutoComponent,
     ProdutoFormModalComponent,
     UnidadeMedidaFormModalComponent,
+    ClienteFormModalComponent,
     MessageComponent,
     LoaderComponent,
     ConfirmModalComponent,
     UnidadeMedidaComponent,
+    ClienteComponent,
     VendaComponent,
     ContaComponent,
   ],

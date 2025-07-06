@@ -186,4 +186,62 @@ export class ClienteService {
     
     return { items: clientes, total, lastVisible };
   }
+
+  // Método específico para buscar clientes frequentes baseado em lista de nomes
+  async buscarClientesFrequentesPaginados(
+    pageSize: number, 
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+    clientesFrequentes: string[] = []
+  ): Promise<PaginatedResult<Cliente>> {
+    const user = this.auth.currentUser;
+    if (!user || clientesFrequentes.length === 0) return { items: [], total: 0 };
+
+    const clientesRef = collection(this.firestore, 'clientes');
+    
+    // Query para contagem total de clientes frequentes
+    const countQuery = query(
+      clientesRef, 
+      where('empresa_id', '==', user.uid),
+      where('nome', 'in', clientesFrequentes)
+    );
+    
+    // Obter contagem total
+    const countSnapshot = await getCountFromServer(countQuery);
+    const total = countSnapshot.data().count;
+    
+    // Construir a query paginada para clientes frequentes
+    let queryConstraints: any[] = [
+      where('empresa_id', '==', user.uid),
+      where('nome', 'in', clientesFrequentes),
+      orderBy('nome') // Ordenar por nome alfabético
+    ];
+    
+    // Adicionar startAfter para paginação
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
+    
+    // Adicionar limitação de página
+    queryConstraints.push(limit(pageSize));
+    
+    // Executar a query
+    const paginatedQuery = query(clientesRef, ...queryConstraints);
+    const snapshot = await getDocs(paginatedQuery);
+    
+    const clientes: Cliente[] = [];
+    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      clientes.push({
+        id: doc.id,
+        nome: data['nome'],
+        celular: data['celular'],
+        empresa_id: data['empresa_id']
+      });
+      lastVisible = doc;
+    });
+    
+    return { items: clientes, total, lastVisible };
+  }
 }

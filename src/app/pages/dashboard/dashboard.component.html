@@ -34,7 +34,8 @@
         <!-- Cards de Estatísticas -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Vendas do Dia -->
-            <div class="p-4 bg-gradient-to-br from-blue-100 to-[#E8F0FE] rounded-lg shadow-sm">
+            <div (click)="navegarParaVendasHoje()" 
+                 class="p-4 bg-gradient-to-br from-blue-100 to-[#E8F0FE] rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all transform hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Vendas Hoje</p>
@@ -45,10 +46,15 @@
                     </div>
                 </div>
                 <p class="text-lg font-bold mt-2">{{ valorTotalHoje | currency:'BRL' }}</p>
+                <div class="mt-2 text-xs text-blue-600 font-medium flex items-center">
+                    <i class="fa-solid fa-chart-line mr-1"></i>
+                    Clique para ver relatórios
+                </div>
             </div>
 
             <!-- Produtos com Baixo Estoque -->
-            <div class="p-4 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg shadow-sm">
+            <div (click)="navegarParaProdutosBaixoEstoque()" 
+                 class="p-4 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all transform hover:scale-105">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium text-gray-600">Produtos com Baixo Estoque</p>
                     <div class="p-2 bg-amber-500 bg-opacity-20 rounded-full">
@@ -67,12 +73,16 @@
                         + {{ produtosBaixoEstoque.length - 3 }} outros
                     </li>
                 </ul>
-                <p *ngIf="produtosBaixoEstoque.length === 0" class="text-sm text-gray-600">Todos os produtos com estoque
-                    adequado.</p>
+                <p *ngIf="produtosBaixoEstoque.length === 0" class="text-sm text-gray-600">Todos os produtos com estoque adequado.</p>
+                <div class="mt-2 text-xs text-amber-600 font-medium flex items-center">
+                    <i class="fa-solid fa-box mr-1"></i>
+                    Clique para gerenciar estoque
+                </div>
             </div>
 
             <!-- Clientes Frequentes -->
-            <div class="p-4 bg-gradient-to-br from-green-100 to-green-50 rounded-lg shadow-sm">
+            <div (click)="navegarParaClientesFrequentes()" 
+                 class="p-4 bg-gradient-to-br from-green-100 to-green-50 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all transform hover:scale-105">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium text-gray-600">Clientes Frequentes</p>
                     <div class="p-2 bg-green-500 bg-opacity-20 rounded-full">
@@ -86,12 +96,16 @@
                         <span class="text-green-700">{{ c.quantidade }} compras</span>
                     </li>
                 </ul>
-                <p *ngIf="clientesMaisFrequentes.length === 0" class="text-sm text-gray-600">Nenhum cliente frequente
-                    encontrado.</p>
+                <p *ngIf="clientesMaisFrequentes.length === 0" class="text-sm text-gray-600">Nenhum cliente frequente encontrado.</p>
+                <div class="mt-2 text-xs text-green-600 font-medium flex items-center">
+                    <i class="fa-solid fa-address-book mr-1"></i>
+                    Clique para gerenciar clientes
+                </div>
             </div>
 
             <!-- Produtos Populares -->
-            <div class="p-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg shadow-sm">
+            <div (click)="navegarParaProdutosMaisVendidos()" 
+                 class="p-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all transform hover:scale-105">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium text-gray-600">Produtos Mais Vendidos</p>
                     <div class="p-2 bg-purple-500 bg-opacity-20 rounded-full">
@@ -106,6 +120,10 @@
                     </li>
                 </ul>
                 <p *ngIf="produtosMaisVendidos.length === 0" class="text-sm text-gray-600">Nenhuma venda no período.</p>
+                <div class="mt-2 text-xs text-purple-600 font-medium flex items-center">
+                    <i class="fa-solid fa-star mr-1"></i>
+                    Clique para ver top produtos
+                </div>
             </div>
         </div>
 

@@ -177,6 +177,67 @@ export class ProdutoService {
     return { items: produtos, total, lastVisible };
   }
 
+  // Método específico para buscar produtos com baixo estoque (< 10 unidades)
+  async buscarProdutosBaixoEstoquePaginados(
+    pageSize: number, 
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
+  ): Promise<PaginatedResult<Produto>> {
+    const user = this.auth.currentUser;
+    if (!user) return { items: [], total: 0 };
+
+    const produtosRef = collection(this.firestore, 'produtos');
+    
+    // Query para contagem total de produtos com baixo estoque
+    const countQuery = query(
+      produtosRef, 
+      where('empresa_id', '==', user.uid),
+      where('estoque', '<', 10)
+    );
+    
+    // Obter contagem total
+    const countSnapshot = await getCountFromServer(countQuery);
+    const total = countSnapshot.data().count;
+    
+    // Construir a query paginada para produtos com baixo estoque
+    let queryConstraints: any[] = [
+      where('empresa_id', '==', user.uid),
+      where('estoque', '<', 10),
+      orderBy('estoque'), // Ordenar por estoque (menor primeiro)
+      orderBy('nome')     // Ordenação secundária por nome
+    ];
+    
+    // Adicionar startAfter para paginação
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
+    
+    // Adicionar limitação de página
+    queryConstraints.push(limit(pageSize));
+    
+    // Executar a query
+    const paginatedQuery = query(produtosRef, ...queryConstraints);
+    const snapshot = await getDocs(paginatedQuery);
+    
+    const produtos: Produto[] = [];
+    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      produtos.push({
+        id: doc.id,
+        empresa_id: data['empresa_id'],
+        nome: data['nome'],
+        preco_compra: data['preco_compra'],
+        preco_venda: data['preco_venda'],
+        estoque: data['estoque'],
+        unidadeMedida: data['unidadeMedida']
+      });
+      lastVisible = doc;
+    });
+    
+    return { items: produtos, total, lastVisible };
+  }
+
   adicionarProduto(produto: Produto) {
     const user = this.auth.currentUser;
     if (!user) return;
@@ -206,5 +267,66 @@ export class ProdutoService {
   excluirProduto(id: string) {
     const produtoDoc = doc(this.firestore, `produtos/${id}`);
     return deleteDoc(produtoDoc) ;
+  }
+
+  // Método específico para buscar produtos mais vendidos baseado em lista de IDs
+  async buscarProdutosMaisVendidosPaginados(
+    pageSize: number, 
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+    produtosMaisVendidosIds: string[] = []
+  ): Promise<PaginatedResult<Produto>> {
+    const user = this.auth.currentUser;
+    if (!user || produtosMaisVendidosIds.length === 0) return { items: [], total: 0 };
+
+    const produtosRef = collection(this.firestore, 'produtos');
+    
+    // Query para contagem total de produtos mais vendidos
+    const countQuery = query(
+      produtosRef, 
+      where('empresa_id', '==', user.uid),
+      where('id', 'in', produtosMaisVendidosIds)
+    );
+    
+    // Obter contagem total
+    const countSnapshot = await getCountFromServer(countQuery);
+    const total = countSnapshot.data().count;
+    
+    // Construir a query paginada para produtos mais vendidos
+    let queryConstraints: any[] = [
+      where('empresa_id', '==', user.uid),
+      where('id', 'in', produtosMaisVendidosIds),
+      orderBy('nome') // Ordenar por nome alfabético
+    ];
+    
+    // Adicionar startAfter para paginação
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
+    
+    // Adicionar limitação de página
+    queryConstraints.push(limit(pageSize));
+    
+    // Executar a query
+    const paginatedQuery = query(produtosRef, ...queryConstraints);
+    const snapshot = await getDocs(paginatedQuery);
+    
+    const produtos: Produto[] = [];
+    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      produtos.push({
+        id: doc.id,
+        empresa_id: data['empresa_id'],
+        nome: data['nome'],
+        preco_compra: data['preco_compra'],
+        preco_venda: data['preco_venda'],
+        estoque: data['estoque'],
+        unidadeMedida: data['unidadeMedida']
+      });
+      lastVisible = doc;
+    });
+    
+    return { items: produtos, total, lastVisible };
   }
 }

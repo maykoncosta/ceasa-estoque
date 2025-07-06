@@ -145,12 +145,13 @@ export class DashboardComponent implements OnInit {
   
   calcularProdutosMaisVendidos(vendas: Venda[]) {
     // Map para manter contagem de produtos
-    const produtosCount: { [key: string]: { nome: string; quantidade: number; total: number; unidade_medida?: string } } = {};
+    const produtosCount: { [key: string]: { id: string; nome: string; quantidade: number; total: number; unidade_medida?: string } } = {};
     
     vendas.forEach(venda => {
       venda.produtos.forEach(p => {
         if (!produtosCount[p.produto_id]) {
           produtosCount[p.produto_id] = { 
+            id: p.produto_id,
             nome: p.nome, 
             quantidade: 0, 
             total: 0,
@@ -203,5 +204,41 @@ export class DashboardComponent implements OnInit {
   
   navegarPara(rota: string) {
     this.router.navigateByUrl(rota);
+  }
+
+  navegarParaVendasHoje() {
+    this.router.navigateByUrl('/relatorios');
+  }
+
+  navegarParaProdutosBaixoEstoque() {
+    this.router.navigate(['/produtos'], { 
+      queryParams: { 
+        filtro: 'baixo-estoque'
+      }
+    });
+  }
+
+  navegarParaClientesFrequentes() {
+    // Extrair apenas os nomes dos clientes frequentes
+    const nomesClientes = this.clientesMaisFrequentes.map(c => c.nome);
+    
+    this.router.navigate(['/clientes'], { 
+      queryParams: { 
+        filtro: 'frequentes',
+        clientes: encodeURIComponent(JSON.stringify(nomesClientes))
+      }
+    });
+  }
+
+  navegarParaProdutosMaisVendidos() {
+    // Extrair apenas os IDs dos produtos mais vendidos
+    const idsProdutos = this.produtosMaisVendidos.map(p => p.id);
+    
+    this.router.navigate(['/produtos'], { 
+      queryParams: { 
+        filtro: 'mais-vendidos',
+        produtos: encodeURIComponent(JSON.stringify(idsProdutos))
+      }
+    });
   }
 }

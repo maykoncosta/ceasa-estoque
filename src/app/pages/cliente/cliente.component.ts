@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Cliente, ClienteService } from 'src/app/core/services/cliente.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
@@ -15,12 +16,17 @@ import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 export class ClienteComponent extends BaseComponent<Cliente> {
   showFormModal = false;
   selectedCliente: Cliente | null = null;
+  
+  // Filtros específicos
+  filtroAtivo: string | null = null;
+  clientesFrequentesNomes: string[] = [];
 
   constructor(
     messageService: MessageService,
     loaderService: LoaderService,
     private clienteService: ClienteService,
-    private phoneValidator: PhoneValidatorService
+    private phoneValidator: PhoneValidatorService,
+    private route: ActivatedRoute
   ) {
     super(loaderService, messageService);
   }
@@ -56,6 +62,16 @@ export class ClienteComponent extends BaseComponent<Cliente> {
     startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
     searchTerm?: string
   ) {
+    // Se há filtro de clientes frequentes ativo, usar o método específico
+    if (this.filtroAtivo === 'frequentes' && this.clientesFrequentesNomes.length > 0) {
+      return this.clienteService.buscarClientesFrequentesPaginados(
+        pageSize, 
+        startAfterDoc, 
+        this.clientesFrequentesNomes
+      );
+    }
+    
+    // Caso contrário, usar o método padrão
     return this.clienteService.buscarClientesPaginadas(pageSize, startAfterDoc, searchTerm);
   }
 
@@ -154,5 +170,32 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   // Método para formatar celular na exibição
   formatarCelular(celular: string): string {
     return this.phoneValidator.formatarParaExibicao(celular);
+  }
+
+  override ngOnInit(): void {
+    // Verificar se há query parameters de filtro
+    this.route.queryParams.subscribe(params => {
+      this.filtroAtivo = params['filtro'] || null;
+      
+      // Se há filtro de clientes frequentes, extrair a lista de nomes
+      if (this.filtroAtivo === 'frequentes' && params['clientes']) {
+        try {
+          this.clientesFrequentesNomes = JSON.parse(decodeURIComponent(params['clientes']));
+        } catch (e) {
+          console.error('Erro ao parsear lista de clientes frequentes:', e);
+          this.clientesFrequentesNomes = [];
+        }
+      }
+    });
+
+    // Chamar o ngOnInit da classe pai
+    super.ngOnInit();
+  }
+
+  limparFiltros(): void {
+    this.filtroAtivo = null;
+    this.clientesFrequentesNomes = [];
+    // Recarregar dados sem filtros
+    this.listarItensPaginados();
   }
 }

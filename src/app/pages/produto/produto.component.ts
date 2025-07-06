@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
@@ -17,11 +18,16 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   showFormModal = false;
   selectedProduto: Produto | null = null;
   
+  // Filtros específicos
+  filtroAtivo: string | null = null;
+  produtosMaisVendidosIds: string[] = [];
+  
   constructor(
     messageService: MessageService,
     loaderService: LoaderService,
     private produtoService: ProdutoService,
-    private unidadeService: UnidadeMedidaService
+    private unidadeService: UnidadeMedidaService,
+    private route: ActivatedRoute
   ) {
     super(loaderService, messageService);
   }
@@ -58,6 +64,21 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
     searchTerm?: string
   ) {
+    // Se há filtro de baixo estoque ativo, usar o método específico
+    if (this.filtroAtivo === 'baixo-estoque') {
+      return this.produtoService.buscarProdutosBaixoEstoquePaginados(pageSize, startAfterDoc);
+    }
+    
+    // Se há filtro de produtos mais vendidos ativo, usar o método específico
+    if (this.filtroAtivo === 'mais-vendidos' && this.produtosMaisVendidosIds.length > 0) {
+      return this.produtoService.buscarProdutosMaisVendidosPaginados(
+        pageSize, 
+        startAfterDoc, 
+        this.produtosMaisVendidosIds
+      );
+    }
+    
+    // Caso contrário, usar o método padrão
     return this.produtoService.buscarProdutosPaginados(pageSize, startAfterDoc, searchTerm);
   }
 
@@ -148,5 +169,32 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   saveProdutoFromModal(produto: Produto): void {
     // Reutiliza a lógica existente
     this.saveItem();
+  }
+
+  override ngOnInit(): void {
+    // Verificar se há query parameters de filtro
+    this.route.queryParams.subscribe(params => {
+      this.filtroAtivo = params['filtro'] || null;
+      
+      // Se há filtro de produtos mais vendidos, extrair a lista de IDs
+      if (this.filtroAtivo === 'mais-vendidos' && params['produtos']) {
+        try {
+          this.produtosMaisVendidosIds = JSON.parse(decodeURIComponent(params['produtos']));
+        } catch (e) {
+          console.error('Erro ao parsear lista de produtos mais vendidos:', e);
+          this.produtosMaisVendidosIds = [];
+        }
+      }
+    });
+
+    // Chamar o ngOnInit da classe pai
+    super.ngOnInit();
+  }
+
+  limparFiltros(): void {
+    this.filtroAtivo = null;
+    this.produtosMaisVendidosIds = [];
+    // Recarregar dados sem filtros
+    this.listarItensPaginados();
   }
 }

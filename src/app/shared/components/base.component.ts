@@ -35,7 +35,6 @@ export abstract class BaseComponent<T> implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.initializeForm();
         this.initializePaginationConfig();
         this.loaderService.showLoading();
         this.listarItensPaginados();
@@ -45,8 +44,7 @@ export abstract class BaseComponent<T> implements OnInit {
     /**
      * Métodos abstratos que devem ser implementados pelas classes filhas
      */
-    abstract initializeForm(): void;
-    abstract listarItens(): void;  // Mantido para compatibilidade
+        abstract listarItens(): void;  // Mantido para compatibilidade
     abstract onLoadValues(): void;
     abstract saveItem(): void;
     

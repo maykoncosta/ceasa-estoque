@@ -25,6 +25,7 @@ import { environment } from '../environments/environment';
 import { CurrencyPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { VendaComponent } from './pages/venda/venda.component';
+import { VendaFormComponent } from './pages/venda/venda-form/venda-form.component';
 import { ClienteComponent } from './pages/cliente/cliente.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { RelatorioModule } from './pages/relatorio/relatorio.module';
@@ -46,6 +47,7 @@ registerLocaleData(localePt);
     UnidadeMedidaComponent,
     ClienteComponent,
     VendaComponent,
+    VendaFormComponent,
     ContaComponent,
   ],
   imports: [

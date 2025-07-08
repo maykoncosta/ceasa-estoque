@@ -12,7 +12,7 @@
     <div *ngIf="!loading" class="space-y-6">
         <!-- Ações rápidas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <button (click)="navegarPara('/vendas')"
+            <button (click)="navegarPara('/vendas/nova')"
                 class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg shadow-md flex flex-col items-center justify-center transition-all">
                 <i class="fa-solid fa-cart-plus text-2xl mb-2"></i>
                 <span class="text-lg font-medium">Nova Venda</span>
@@ -177,8 +177,7 @@
         </div> <!-- Tabela de Vendas Recentes -->
         <!-- <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="font-medium text-gray-700">Vendas Recentes</h3>
-        <button (click)="navegarPara('/vendas')" 
+        <h3 class="font-medium text-gray-700">Vendas Recentes</h3>            <button (click)="navegarPara('/vendas/nova')"
           class="text-sm text-blue-500 hover:text-blue-700 flex items-center">
           Ver todas 
           <i class="fa-solid fa-angle-right ml-1"></i>

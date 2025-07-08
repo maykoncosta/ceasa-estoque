@@ -47,17 +47,6 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     });
   }
 
-  override initializeForm(): void {
-    this.form = new UntypedFormGroup({
-      id: new UntypedFormControl({ value: '', disabled: true }),
-      nome: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(15)])),
-      estoque: new UntypedFormControl(undefined, Validators.compose([Validators.required])),
-      preco_compra: new UntypedFormControl(undefined, Validators.required),
-      preco_venda: new UntypedFormControl(undefined, Validators.required),
-      unidadeMedida: new UntypedFormControl(undefined, Validators.required),
-    });
-  }
-
   // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
   override async buscarItensPaginados(
     pageSize: number, 

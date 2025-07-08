@@ -1,0 +1,17 @@
+/* Estilos específicos do componente de formulário de vendas */
+
+/* Personalização adicional se necessário */
+.product-table-responsive {
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .product-table-responsive table {
+    font-size: 0.75rem;
+  }
+  
+  .product-table-responsive th,
+  .product-table-responsive td {
+    padding: 0.5rem 0.25rem;
+  }
+}

@@ -36,14 +36,6 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
     // Não há valores adicionais para carregar neste componente
   }
 
-  override initializeForm(): void {
-    this.form = new UntypedFormGroup({
-      id: new UntypedFormControl({ value: '', disabled: true }),
-      nome: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(20)])),
-      descricao: new UntypedFormControl(undefined, Validators.compose([Validators.required, Validators.maxLength(100)])),
-    });
-  }
-
   // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
   override async buscarItensPaginados(
     pageSize: number, 

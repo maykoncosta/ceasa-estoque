@@ -1,47 +1,26 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { Component, Input } from '@angular/core';
 import { Cliente } from 'src/app/core/services/cliente.service';
 import { PhoneValidatorService } from 'src/app/shared/services/phone-validator.service';
+import { BaseFormModalComponent } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-cliente-form-modal',
   templateUrl: './cliente-form-modal.component.html',
   styleUrls: ['./cliente-form-modal.component.css']
 })
-export class ClienteFormModalComponent implements OnChanges {
-  @Input() show = false;
-  @Input() isEdit = false;
+export class ClienteFormModalComponent extends BaseFormModalComponent<Cliente> {
   @Input() cliente: Cliente | null = null;
-  @Input() form!: UntypedFormGroup;
 
-  @Output() save = new EventEmitter<Cliente>();
-  @Output() cancel = new EventEmitter<void>();
-
-  constructor(private phoneValidator: PhoneValidatorService) {}
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['cliente'] && this.cliente && this.form) {
-      this.form.patchValue(this.cliente);
-    }
+  constructor(private phoneValidator: PhoneValidatorService) {
+    super();
   }
 
-  onSave(): void {
-    if (this.form.invalid) {
-      return;
-    }
-    this.save.emit(this.form.getRawValue());
+  protected get itemPropertyName(): string {
+    return 'cliente';
   }
 
-  onCancel(): void {
-    this.cancel.emit();
-  }
-
-  hasFieldError(form: UntypedFormGroup, field: string, error: string, ngForm: any): boolean {
-    const formField = form.get(field);
-    return (
-      (formField?.hasError(error) && 
-      (formField.touched || formField.dirty || ngForm?.submitted)) || false
-    );
+  protected get currentItem(): Cliente | null {
+    return this.cliente;
   }
 
   formatarCelular(event: any): void {

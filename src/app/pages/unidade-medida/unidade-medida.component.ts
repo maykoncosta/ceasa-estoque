@@ -52,49 +52,20 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
       this.loaderService.closeLoading();
     });
   }
-
   override saveItem(): void {
-    if (this.form.invalid) {
-      this.messageService.info("Preencha todos os campos obrigatórios corretamente.");
-      return;
-    }
-
-    const unidade: UnidadeMedida = this.form.getRawValue();
-    this.loaderService.showLoading();
-
-    if (this.onEdit) {
-      this.unidadeService.atualizarUnidade(unidade.id, unidade)
-        .then(() => this.aposSalvar())
-        .catch((error) => {
-          this.messageService.error(error.message);
-          this.loaderService.closeLoading();
-        });
-    } else {
-      this.unidadeService.adicionarUnidade(unidade)
-        .then(() => this.aposSalvar())
-        .catch((error) => {
-          this.messageService.error(error.message);
-          this.loaderService.closeLoading();
-        });
-    }
+    // Este método agora será chamado pelo modal com os dados do formulário
+    // A lógica de salvamento será movida para saveUnidadeMedidaFromModal
   }
 
   // Método para lidar com a exclusão de unidades
   onDeleteItem(): void {
     this.deleteItem(() => this.unidadeService.excluirUnidade(this.itemToDelete!.id, this.itemToDelete!.nome));
   }
-
   // Métodos para gerenciar o modal de formulário
   openFormModal(isEdit: boolean, unidadeMedida?: UnidadeMedida): void {
     this.onEdit = isEdit;
     this.onCreate = !isEdit;
     this.selectedUnidadeMedida = unidadeMedida || null;
-    this.form.reset();
-    
-    if (isEdit && unidadeMedida) {
-      this.form.patchValue(unidadeMedida);
-    }
-    
     this.showFormModal = true;
   }
 
@@ -103,7 +74,6 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
     this.onEdit = false;
     this.onCreate = false;
     this.selectedUnidadeMedida = null;
-    this.form.reset();
   }
 
   // Sobrescrevendo os métodos do BaseComponent
@@ -125,10 +95,24 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
     this.closeFormModal();
     this.messageService.success();
   }
-
   // Método para salvar a unidade de medida do formulário modal
   saveUnidadeMedidaFromModal(unidadeMedida: UnidadeMedida): void {
-    // Reutiliza a lógica existente
-    this.saveItem();
+    this.loaderService.showLoading();
+
+    if (this.onEdit) {
+      this.unidadeService.atualizarUnidade(unidadeMedida.id, unidadeMedida)
+        .then(() => this.aposSalvar())
+        .catch((error) => {
+          this.messageService.error(error.message);
+          this.loaderService.closeLoading();
+        });
+    } else {
+      this.unidadeService.adicionarUnidade(unidadeMedida)
+        .then(() => this.aposSalvar())
+        .catch((error) => {
+          this.messageService.error(error.message);
+          this.loaderService.closeLoading();
+        });
+    }
   }
 }

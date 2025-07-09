@@ -1,29 +1,91 @@
 {
   "indexes": [
     {
-      "collectionGroup": "produtos",
+      "collectionGroup": "clientes",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "empresa_id", "mode": "ASCENDING" },
-        { "fieldPath": "nome", "mode": "ASCENDING" }
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nome",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "produtos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "empresa_id", "mode": "ASCENDING" },
-        { "fieldPath": "nome", "mode": "ASCENDING" },
-        { "fieldPath": "__name__", "mode": "ASCENDING" }
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estoque",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "produtos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "empresa_id", "mode": "ASCENDING" },
-        { "fieldPath": "nome", "mode": "ASCENDING" },
-        { "fieldPath": "nome", "mode": "ASCENDING" }
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estoque",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nome",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "produtos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nome",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "unidades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nome",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "vendas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "empresa_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "data",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],

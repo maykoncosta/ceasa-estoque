@@ -78,51 +78,20 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       this.loaderService.closeLoading();
     });
   }
-
   override saveItem(): void {
-    if (this.form.invalid) {
-      this.messageService.info("Preencha todos os campos obrigatórios corretamente.");
-      return;
-    }
-
-    const produto: Produto = this.form.getRawValue();
-    this.loaderService.showLoading();
-
-    if (this.onEdit) {
-      this.produtoService.atualizarProduto(produto.id, produto)
-        .then(() => this.aposSalvar())
-        .catch(() => this.messageService.error())
-        .finally(() => this.loaderService.closeLoading());
-    } else {
-      const user = this.produtoService.adicionarProduto(produto);
-      if (!user) {
-        this.messageService.error("Erro ao adicionar produto. Usuário não autenticado.");
-        this.loaderService.closeLoading();
-        return;
-      }
-
-      user.then(() => this.aposSalvar())
-        .catch(() => this.messageService.error())
-        .finally(() => this.loaderService.closeLoading());
-    }
+    // Este método agora será chamado pelo modal com os dados do formulário
+    // A lógica de salvamento será movida para saveProdutoFromModal
   }
 
   // Método para lidar com a exclusão de produtos
   onDeleteItem(): void {
     this.deleteItem(() => this.produtoService.excluirProduto(this.itemToDelete!.id));
   }
-
   // Métodos para gerenciar o modal de formulário
   openFormModal(isEdit: boolean, produto?: Produto): void {
     this.onEdit = isEdit;
     this.onCreate = !isEdit;
     this.selectedProduto = produto || null;
-    this.form.reset();
-    
-    if (isEdit && produto) {
-      this.form.patchValue(produto);
-    }
-    
     this.showFormModal = true;
   }
 
@@ -131,7 +100,6 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.onEdit = false;
     this.onCreate = false;
     this.selectedProduto = null;
-    this.form.reset();
   }
 
   // Sobrescrevendo os métodos do BaseComponent
@@ -153,11 +121,27 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.closeFormModal();
     this.messageService.success();
   }
-
   // Método para salvar o produto do formulário modal
   saveProdutoFromModal(produto: Produto): void {
-    // Reutiliza a lógica existente
-    this.saveItem();
+    this.loaderService.showLoading();
+
+    if (this.onEdit) {
+      this.produtoService.atualizarProduto(produto.id, produto)
+        .then(() => this.aposSalvar())
+        .catch(() => this.messageService.error())
+        .finally(() => this.loaderService.closeLoading());
+    } else {
+      const user = this.produtoService.adicionarProduto(produto);
+      if (!user) {
+        this.messageService.error("Erro ao adicionar produto. Usuário não autenticado.");
+        this.loaderService.closeLoading();
+        return;
+      }
+
+      user.then(() => this.aposSalvar())
+        .catch(() => this.messageService.error())
+        .finally(() => this.loaderService.closeLoading());
+    }
   }
 
   override ngOnInit(): void {

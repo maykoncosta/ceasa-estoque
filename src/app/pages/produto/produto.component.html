@@ -136,7 +136,7 @@
 
 <!-- Modal para adicionar/editar produto -->
 <app-produto-form-modal [show]="showFormModal" [isEdit]="onEdit" [produto]="selectedProduto" [unidades]="unidades"
-    [form]="form" (save)="saveProdutoFromModal($event)" (cancel)="closeFormModal()">
+    (save)="saveProdutoFromModal($event)" (cancel)="closeFormModal()">
 </app-produto-form-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">

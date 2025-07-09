@@ -125,7 +125,7 @@
 
 <!-- Modal para adicionar/editar cliente -->
 <app-cliente-form-modal [show]="showFormModal" [isEdit]="onEdit" [cliente]="selectedCliente"
-    [form]="form" (save)="saveClienteFromModal($event)" (cancel)="closeFormModal()">
+    (save)="saveClienteFromModal($event)" (cancel)="closeFormModal()">
 </app-cliente-form-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">

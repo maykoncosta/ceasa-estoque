@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { UnidadeMedida } from 'src/app/core/services/unidade-medida.service';
 import { BaseFormModalComponent } from 'src/app/shared/components';
 
@@ -16,5 +17,13 @@ export class UnidadeMedidaFormModalComponent extends BaseFormModalComponent<Unid
 
   protected get currentItem(): UnidadeMedida | null {
     return this.unidadeMedida;
+  }
+
+  protected initializeForm(): void {
+    this.form = new UntypedFormGroup({
+      id: new UntypedFormControl({ value: '', disabled: true }),
+      nome: new UntypedFormControl(undefined, [Validators.required, Validators.maxLength(20)]),
+      descricao: new UntypedFormControl(undefined, [Validators.required, Validators.maxLength(100)])
+    });
   }
 }

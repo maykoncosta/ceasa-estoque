@@ -105,7 +105,7 @@
 
 <!-- Modal para adicionar/editar unidade de medida -->
 <app-unidade-medida-form-modal [show]="showFormModal" [isEdit]="onEdit" [unidadeMedida]="selectedUnidadeMedida"
-    [form]="form" (save)="saveUnidadeMedidaFromModal($event)" (cancel)="closeFormModal()">
+    (save)="saveUnidadeMedidaFromModal($event)" (cancel)="closeFormModal()">
 </app-unidade-medida-form-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">

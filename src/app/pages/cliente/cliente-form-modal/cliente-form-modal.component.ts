@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Cliente } from 'src/app/core/services/cliente.service';
 import { PhoneValidatorService } from 'src/app/shared/services/phone-validator.service';
 import { BaseFormModalComponent } from 'src/app/shared/components';
@@ -21,6 +22,18 @@ export class ClienteFormModalComponent extends BaseFormModalComponent<Cliente> {
 
   protected get currentItem(): Cliente | null {
     return this.cliente;
+  }
+
+  protected initializeForm(): void {
+    this.form = new UntypedFormGroup({
+      id: new UntypedFormControl({ value: '', disabled: true }),
+      nome: new UntypedFormControl(undefined, [Validators.required, Validators.maxLength(50)]),
+      celular: new UntypedFormControl(undefined, [
+        Validators.required, 
+        Validators.maxLength(20),
+        Validators.pattern(/^\(\d{2}\) \d{4,5}-\d{4}$/)
+      ])
+    });
   }
 
   formatarCelular(event: any): void {

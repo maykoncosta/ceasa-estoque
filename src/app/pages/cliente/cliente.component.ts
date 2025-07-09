@@ -70,54 +70,20 @@ export class ClienteComponent extends BaseComponent<Cliente> {
       this.loaderService.closeLoading();
     });
   }
-
   override saveItem(): void {
-    if (this.form.invalid) {
-      this.messageService.info("Preencha todos os campos obrigatórios corretamente.");
-      return;
-    }
-
-    const cliente: Cliente = this.form.getRawValue();
-    this.loaderService.showLoading();
-
-    if (this.onEdit) {
-      this.clienteService.atualizarCliente(cliente.id, cliente)
-        .then(() => this.aposSalvar())
-        .catch((error) => {
-          this.messageService.error(error.message);
-          this.loaderService.closeLoading();
-        });
-    } else {
-      this.clienteService.adicionarCliente(cliente)
-        .then(() => this.aposSalvar())
-        .catch((error) => {
-          this.messageService.error(error.message);
-          this.loaderService.closeLoading();
-        });
-    }
+    // Este método agora será chamado pelo modal com os dados do formulário
+    // A lógica de salvamento será movida para saveClienteFromModal
   }
 
   // Método para lidar com a exclusão de clientes
   onDeleteItem(): void {
     this.deleteItem(() => this.clienteService.excluirCliente(this.itemToDelete!.id, this.itemToDelete!.nome));
   }
-
   // Métodos para gerenciar o modal de formulário
   openFormModal(isEdit: boolean, cliente?: Cliente): void {
     this.onEdit = isEdit;
     this.onCreate = !isEdit;
     this.selectedCliente = cliente || null;
-    this.form.reset();
-    
-    if (isEdit && cliente) {
-      // Formatar o celular para exibição no formulário
-      const clienteFormatado = {
-        ...cliente,
-        celular: this.formatarCelular(cliente.celular)
-      };
-      this.form.patchValue(clienteFormatado);
-    }
-    
     this.showFormModal = true;
   }
 
@@ -126,7 +92,6 @@ export class ClienteComponent extends BaseComponent<Cliente> {
     this.onEdit = false;
     this.onCreate = false;
     this.selectedCliente = null;
-    this.form.reset();
   }
 
   // Sobrescrevendo os métodos do BaseComponent
@@ -148,11 +113,25 @@ export class ClienteComponent extends BaseComponent<Cliente> {
     this.closeFormModal();
     this.messageService.success();
   }
-
   // Método para salvar o cliente do formulário modal
   saveClienteFromModal(cliente: Cliente): void {
-    // Reutiliza a lógica existente
-    this.saveItem();
+    this.loaderService.showLoading();
+
+    if (this.onEdit) {
+      this.clienteService.atualizarCliente(cliente.id, cliente)
+        .then(() => this.aposSalvar())
+        .catch((error) => {
+          this.messageService.error(error.message);
+          this.loaderService.closeLoading();
+        });
+    } else {
+      this.clienteService.adicionarCliente(cliente)
+        .then(() => this.aposSalvar())
+        .catch((error) => {
+          this.messageService.error(error.message);
+          this.loaderService.closeLoading();
+        });
+    }
   }
 
   // Método para formatar celular na exibição

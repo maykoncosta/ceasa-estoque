@@ -78,6 +78,5 @@ export class VendaComponent extends BaseComponent<Venda> {
   }
 
   override onLoadValues(): void {
-    throw new Error('Method not implemented.');
   }
 }

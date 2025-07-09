@@ -1,4 +1,4 @@
-import { FormGroup, FormGroupDirective, UntypedFormGroup } from '@angular/forms';
+import { FormGroup, FormGroupDirective } from '@angular/forms';
 import { LoaderService } from '../services/loader.service';
 import { MessageService } from '../services/message.service';
 import { Directive, OnInit } from '@angular/core';
@@ -8,7 +8,6 @@ import { PaginationConfig } from '../models/pagination.model';
 @Directive()
 export abstract class BaseComponent<T> implements OnInit {
     // Propriedades básicas
-    form!: UntypedFormGroup;
     onEdit: boolean = false;
     onCreate: boolean = false;
     showDeleteModal = false;
@@ -212,19 +211,15 @@ export abstract class BaseComponent<T> implements OnInit {
             // Reiniciar a paginação com o novo tamanho
             this.listarItensPaginados();
         }
-    }
-
-    // Métodos existentes do BaseComponent
+    }    // Métodos existentes do BaseComponent
     onCreateItem(): void {
         this.onCreate = true;
         this.onEdit = false;
-        this.form.reset();
     }
 
     onEditItem(item: any): void {
         this.onEdit = true;
         this.onCreate = false;
-        this.form.patchValue(item);
     }
 
     showModalDelete(item: T): void {
@@ -235,7 +230,6 @@ export abstract class BaseComponent<T> implements OnInit {
     onCancel(): void {
         this.onEdit = false;
         this.onCreate = false;
-        this.form.reset();
     }
 
     deleteItem(deleteCallback: () => Promise<void>): void {
@@ -263,14 +257,11 @@ export abstract class BaseComponent<T> implements OnInit {
         return formGroup.controls[field].hasError(error)
             && !formGroup.valid
             && (formGroup.touched || formGroup.controls[field].touched || frmDirective.submitted);
-    }
-
-    // Método para compatibilidade com implementações existentes
+    }    // Método para compatibilidade com implementações existentes
     aposSalvar(): void {
         this.listarItensPaginados();
         this.onCreate = false;
         this.onEdit = false;
-        this.form.reset();
         this.messageService.success();
     }
 }

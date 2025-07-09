@@ -17,6 +17,14 @@ O módulo de Vendas gerencia o registro e controle de vendas de produtos, inclui
 - **Preço Personalizado**: Possibilidade de alterar preço de venda
 - **Cálculo Automático**: Total e lucro calculados automaticamente
 - **Múltiplos Produtos**: Adição de vários produtos por venda
+- **Gestão de Lucro**: Cálculo individual e total do lucro por venda
+
+### 👥 **Gestão de Clientes na Venda**
+- **Seleção de Cliente**: Dropdown com clientes cadastrados no sistema
+- **Integração**: Conectado diretamente com o módulo de clientes
+- **Validação**: Apenas clientes existentes podem ser selecionados
+- **Busca**: Lista filtrada com todos os clientes disponíveis da empresa
+- **Sincronização**: Automaticamente atualizada quando novos clientes são cadastrados
 
 ### 🔍 **Paginação e Busca**
 - **Paginação**: Sistema centralizado do BaseComponent
@@ -50,16 +58,42 @@ interface Venda {
 ```
 
 ### Campos Obrigatórios
-- **cliente**: Nome do cliente (máximo 25 caracteres)
+- **cliente**: Seleção obrigatória através do dropdown de clientes cadastrados
 - **data**: Data da venda
 - **produtos**: Pelo menos um produto deve ser adicionado
 
 ### Validações
-- **Cliente**: Campo obrigatório, máximo 25 caracteres
+- **Cliente**: Campo obrigatório, deve ser selecionado da lista de clientes cadastrados
 - **Data**: Campo obrigatório, formato de data
 - **Produtos**: Mínimo 1 produto por venda
 - **Quantidade**: Valores numéricos positivos
 - **Preços**: Valores numéricos com validação de tamanho
+
+## Sistema de Gestão de Lucro
+
+### Cálculo Automático
+O sistema calcula automaticamente o lucro de cada produto e da venda total:
+
+#### Lucro Individual
+```typescript
+lucroUnitario = preco_venda - preco_compra;
+lucroTotal = lucroUnitario * quantidade;
+```
+
+#### Lucro Total da Venda
+```typescript
+lucro_total = soma_de_todos_os_lucros_individuais;
+```
+
+### Indicadores Visuais
+- **Verde**: Lucro positivo
+- **Vermelho**: Prejuízo (preço de venda menor que preço de compra)
+- **Exibição**: Mostrado tanto na tabela de produtos quanto no total geral
+
+### Relatórios
+- Lucro individual por produto na venda
+- Lucro total da venda
+- Histórico de lucratividade (futuro)
 
 ## Componente VendaComponent
 
@@ -73,6 +107,7 @@ Herda funcionalidades de paginação, busca e navegação do BaseComponent.
 ```typescript
 // Dados de apoio
 produtos: Produto[] = [];
+clientes: Cliente[] = [];
 unidades: UnidadeMedida[] = [];
 produtosVenda: any[] = [];
 
@@ -85,7 +120,7 @@ pageSizeOptions = [5, 10, 20, 50];
 
 #### Configuração e Inicialização
 - `initializePaginationConfig()`: Configura paginação (10 itens/página)
-- `onLoadValues()`: Carrega produtos e unidades de medida
+- `onLoadValues()`: Carrega produtos, clientes e unidades de medida
 - `initializeForm()`: Inicializa formulário reativo
 
 #### Operações CRUD
@@ -98,6 +133,7 @@ pageSizeOptions = [5, 10, 20, 50];
 - `adicionarProduto()`: Adiciona produto à lista da venda
 - `removerProduto(index)`: Remove produto da lista
 - `calcularTotais()`: Calcula valores totais e lucro
+- `calcularLucroTotal()`: Calcula lucro total da venda
 
 #### Interface
 - `toggleExpand(venda)`: Expande/contrai detalhes da venda
@@ -133,6 +169,8 @@ buscarVendasPaginadas(
 ### Normalização de Dados
 - **cliente**: Convertido automaticamente para UPPERCASE
 - **empresa_id**: Preenchido automaticamente com UID do usuário
+- **lucro_total**: Calculado automaticamente como soma dos lucros individuais
+- **lucro individual**: Calculado como (preço_venda - preço_compra) * quantidade
 
 ### Configuração de Busca
 - **Campo de Busca**: cliente
@@ -158,20 +196,21 @@ buscarVendasPaginadas(
 ```
 [Cadastrar/Editar Venda]
 ├── Dados da Venda
-│   ├── Cliente (obrigatório)
+│   ├── Cliente (dropdown obrigatório)
 │   └── Data (obrigatório)
 ├── Produtos da Venda
 │   ├── Tabela com produtos adicionados
 │   └── Seção para adicionar novos produtos
 │       ├── Produto (dropdown)
 │       ├── Quantidade
-│       ├── Preço
+│       ├── Preço (com cálculo automático de lucro)
 │       └── Unidade de Medida
 └── Botões (Cancelar | Salvar)
 ```
 
 ### Recursos Visuais
 - **Expansão de Detalhes**: Clique na seta para ver produtos da venda
+- **Indicadores de Lucro**: Cores diferenciadas (verde para lucro, vermelho para prejuízo)
 - **Estilização de Erro**: Campos obrigatórios com fundo vermelho quando há erro
 - **Feedback Visual**: Cores diferenciadas para ações
 - **Responsividade**: Layout adaptável para mobile
@@ -182,7 +221,7 @@ buscarVendasPaginadas(
 ```typescript
 // Formulário principal
 form = new UntypedFormGroup({
-  cliente: new UntypedFormControl(undefined, [Validators.required, Validators.maxLength(25)]),
+  cliente: new UntypedFormControl('', [Validators.required]),
   data: new UntypedFormControl(undefined, Validators.required),
   // Campos para adicionar produtos
   produto: new UntypedFormControl(undefined),
@@ -199,7 +238,7 @@ form = new UntypedFormGroup({
 ```
 
 ### Mensagens de Erro
-- **Cliente obrigatório**: "Cliente é obrigatório"
+- **Cliente obrigatório**: "Cliente é obrigatório" (quando não selecionado)
 - **Data obrigatória**: "Data é obrigatória"
 - **Produtos necessários**: Botão "Salvar" desabilitado se não houver produtos
 
@@ -207,7 +246,7 @@ form = new UntypedFormGroup({
 
 ### Criação de Venda
 1. **Iniciar**: Clicar em "Criar Venda"
-2. **Dados Básicos**: Preencher cliente e data
+2. **Dados Básicos**: Selecionar cliente no dropdown e definir data
 3. **Adicionar Produtos**: 
    - Selecionar produto
    - Definir quantidade
@@ -253,6 +292,7 @@ form = new UntypedFormGroup({
 
 ### Dependências
 - **ProdutoService**: Para listagem de produtos disponíveis
+- **ClienteService**: Para listagem de clientes cadastrados
 - **UnidadeMedidaService**: Para unidades de medida
 - **BaseComponent**: Para funcionalidades comuns
 - **MessageService**: Para feedback ao usuário
@@ -260,6 +300,7 @@ form = new UntypedFormGroup({
 
 ### Relacionamentos
 - **Produtos**: Vendas referenciam produtos cadastrados
+- **Clientes**: Vendas referenciam clientes cadastrados
 - **Unidades**: Cada produto tem sua unidade de medida
 - **Empresa**: Vendas isoladas por empresa/usuário
 
@@ -267,10 +308,13 @@ form = new UntypedFormGroup({
 
 ### Funcionalidades
 - [ ] Relatórios de vendas por período
-- [ ] Análise de lucratividade
+- [ ] Análise de lucratividade por produto
+- [ ] Análise de lucratividade por cliente
 - [ ] Histórico de alterações
 - [ ] Vendas em lote
 - [ ] Integração com estoque
+- [ ] Alertas de produtos com baixa margem
+- [ ] Metas de lucro por período
 
 ### Performance
 - [ ] Cache de produtos frequentes
@@ -278,10 +322,11 @@ form = new UntypedFormGroup({
 - [ ] Otimização de queries
 
 ### UX
-- [ ] Auto-complete para clientes
-- [ ] Sugestões de preço
+- [ ] Auto-complete para seleção rápida de clientes
+- [ ] Sugestões de preço baseadas em vendas anteriores
 - [ ] Calculadora integrada
 - [ ] Impressão de comprovantes
+- [ ] Histórico de vendas por cliente
 
 ---
 

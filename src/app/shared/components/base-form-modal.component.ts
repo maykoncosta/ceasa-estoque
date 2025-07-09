@@ -1,11 +1,12 @@
-import { Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 
 @Directive()
-export abstract class BaseFormModalComponent<T> implements OnChanges {
+export abstract class BaseFormModalComponent<T> implements OnInit, OnChanges {
   @Input() show = false;
   @Input() isEdit = false;
-  @Input() form!: UntypedFormGroup;
+  
+  form!: UntypedFormGroup;
 
   @Output() save = new EventEmitter<T>();
   @Output() cancel = new EventEmitter<void>();
@@ -21,6 +22,16 @@ export abstract class BaseFormModalComponent<T> implements OnChanges {
    * Deve ser sobrescrito pelas classes filhas
    */
   protected abstract get currentItem(): T | null;
+
+  /**
+   * Método abstrato para inicializar o formulário
+   * Deve ser implementado pelas classes filhas
+   */
+  protected abstract initializeForm(): void;
+
+  ngOnInit(): void {
+    this.initializeForm();
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes[this.itemPropertyName] && this.currentItem && this.form) {

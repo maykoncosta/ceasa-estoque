@@ -97,6 +97,23 @@ export class VendaComponent extends BaseComponent<Venda> {
     }
   }
 
+  /**
+   * Imprime o cupom diretamente abrindo a tela de impressão
+   * @param venda Dados da venda para impressão
+   */
+  imprimirCupomDireto(venda: Venda): void {
+    try {
+      this.loaderService.showLoading();
+      this.printService.imprimirCupomDireto(venda);
+      this.messageService.success('Abrindo tela de impressão...');
+    } catch (error: any) {
+      console.error('Erro ao imprimir cupom:', error);
+      this.messageService.error(error.message || 'Erro ao abrir tela de impressão');
+    } finally {
+      this.loaderService.closeLoading();
+    }
+  }
+
   override onLoadValues(): void {
   }
 }

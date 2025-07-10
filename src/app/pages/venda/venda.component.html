@@ -60,7 +60,12 @@
                                            [class.fa-chevron-up]="venda.expandido"></i>
                                     </button>                                    <button (click)="imprimirCupom(venda)" 
                                         class="text-green-600 hover:text-green-800 p-1 bg-transparent"
-                                        title="Imprimir cupom">
+                                        title="Gerar PDF do cupom">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </button>
+                                    <button (click)="imprimirCupomDireto(venda)" 
+                                        class="text-blue-600 hover:text-blue-800 p-1 bg-transparent"
+                                        title="Imprimir cupom diretamente">
                                         <i class="fa-solid fa-print"></i>
                                     </button>
                                     <button (click)="onEditItem(venda)" 

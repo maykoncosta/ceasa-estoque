@@ -3,9 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
- // Regra temporária de acesso total até 29 de junho de 2025
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 6, 29);
+      allow read, write: if request.time < timestamp.date(2025, 7, 29);
     }
     
     // Produtos

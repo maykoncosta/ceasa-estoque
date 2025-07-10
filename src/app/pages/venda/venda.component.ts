@@ -5,6 +5,7 @@ import { Venda, VendaService } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { PrintService } from 'src/app/shared/services/print.service';
 
 @Component({
   selector: 'app-venda',
@@ -18,7 +19,8 @@ export class VendaComponent extends BaseComponent<Venda> {
     messageService: MessageService,
     loaderService: LoaderService,
     private vendaService: VendaService,
-    private router: Router
+    private router: Router,
+    private printService: PrintService
   ) {
     super(loaderService, messageService);
   }
@@ -63,6 +65,7 @@ export class VendaComponent extends BaseComponent<Venda> {
 
   // Método para lidar com a exclusão de vendas
   onDeleteItem(): void {
+    console.log('Excluindo venda:', this.itemToDelete);
     this.deleteItem(() => this.vendaService.excluirVenda(this.itemToDelete!.id));
   }
 
@@ -75,6 +78,23 @@ export class VendaComponent extends BaseComponent<Venda> {
   formatarData(dataStr: string): string {
     const data = new Date(dataStr);
     return data.toLocaleDateString('pt-BR');
+  }
+
+  /**
+   * Imprime o cupom não fiscal da venda
+   * @param venda Dados da venda para impressão
+   */
+  imprimirCupom(venda: Venda): void {
+    try {
+      this.loaderService.showLoading();
+      this.printService.gerarCupomVenda(venda);
+      this.messageService.success('Cupom gerado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao imprimir cupom:', error);
+      this.messageService.error(error.message || 'Erro ao gerar cupom');
+    } finally {
+      this.loaderService.closeLoading();
+    }
   }
 
   override onLoadValues(): void {

@@ -24,7 +24,7 @@ export abstract class BaseComponent<T> implements OnInit {
     lastVisible?: QueryDocumentSnapshot<DocumentData>;
     pageHistory: QueryDocumentSnapshot<DocumentData>[] = [];
     paginationConfig: PaginationConfig = { pageSize: 10, orderByField: 'nome' };
-    
+
     // Propriedades para busca
     searchTerm: string = '';
 
@@ -43,10 +43,10 @@ export abstract class BaseComponent<T> implements OnInit {
     /**
      * Métodos abstratos que devem ser implementados pelas classes filhas
      */
-        abstract listarItens(): void;  // Mantido para compatibilidade
+    abstract listarItens(): void;  // Mantido para compatibilidade
     abstract onLoadValues(): void;
     abstract saveItem(): void;
-    
+
     /**
      * Inicializa a configuração de paginação com valores padrão
      * As classes filhas podem sobrescrever para personalizar
@@ -62,7 +62,7 @@ export abstract class BaseComponent<T> implements OnInit {
      * @param searchTerm Termo de busca opcional
      */
     abstract buscarItensPaginados(
-        pageSize: number, 
+        pageSize: number,
         startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
         searchTerm?: string
     ): Promise<{
@@ -76,14 +76,14 @@ export abstract class BaseComponent<T> implements OnInit {
      */
     listarItensPaginados(): void {
         this.loaderService.showLoading();
-        
+
         this.buscarItensPaginados(this.pageSize, undefined, this.searchTerm)
             .then(result => {
                 this.items = result.items;
                 this.totalItems = result.total;
                 this.lastVisible = result.lastVisible;
                 this.calcularTotalPaginas();
-                
+
                 // Resetar histórico de navegação ao carregar a primeira página
                 this.pageHistory = [];
                 this.currentPage = 1;
@@ -127,12 +127,12 @@ export abstract class BaseComponent<T> implements OnInit {
     proximaPagina(): void {
         if (this.currentPage < this.totalPages && this.lastVisible) {
             this.loaderService.showLoading();
-            
+
             // Armazenar o documento atual no histórico para poder voltar
             if (this.lastVisible) {
                 this.pageHistory.push(this.lastVisible);
             }
-            
+
             this.buscarItensPaginados(this.pageSize, this.lastVisible, this.searchTerm)
                 .then(result => {
                     this.items = result.items;
@@ -155,11 +155,11 @@ export abstract class BaseComponent<T> implements OnInit {
     paginaAnterior(): void {
         if (this.currentPage > 1) {
             this.loaderService.showLoading();
-            
+
             // Remover o último documento do histórico
             this.pageHistory.pop();
             this.currentPage--;
-            
+
             // Se ainda estiver na primeira página, carregar sem startAfter
             if (this.currentPage === 1) {
                 this.buscarItensPaginados(this.pageSize, undefined, this.searchTerm)
@@ -240,12 +240,14 @@ export abstract class BaseComponent<T> implements OnInit {
                     this.itemToDelete = undefined;
                     this.showDeleteModal = false;
                     this.messageService.success();
-                    
+
                     // Atualizar a lista após exclusão
                     this.listarItensPaginados();
                 })
-                .catch(() => {
-                    this.messageService.error();
+                .catch((err) => {
+                    this.itemToDelete = undefined;
+                    this.showDeleteModal = false;
+                    this.messageService.error(err.message);
                 })
                 .finally(() => {
                     this.loaderService.closeLoading();

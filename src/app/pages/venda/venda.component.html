@@ -58,6 +58,10 @@
                                         <i class="fa-solid" 
                                            [class.fa-chevron-down]="!venda.expandido" 
                                            [class.fa-chevron-up]="venda.expandido"></i>
+                                    </button>                                    <button (click)="imprimirCupom(venda)" 
+                                        class="text-green-600 hover:text-green-800 p-1 bg-transparent"
+                                        title="Imprimir cupom">
+                                        <i class="fa-solid fa-print"></i>
                                     </button>
                                     <button (click)="onEditItem(venda)" 
                                         class="text-blue-600 hover:text-blue-800 p-1 bg-transparent"
@@ -174,6 +178,6 @@
 <app-confirm-modal 
     [show]="showDeleteModal" 
     [message]="'Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.'" 
-    (confirmed)="onDeleteItem()" 
-    (cancelled)="onCancel()">
+    (confirm)="onDeleteItem()" 
+    (cancel)="onCancel()">
 </app-confirm-modal>

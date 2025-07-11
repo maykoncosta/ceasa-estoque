@@ -23,6 +23,17 @@ export class VendaFormComponent implements OnInit {
   isEditing = false;
   vendaId: string | null = null;
   loading = false;
+
+  // Autocomplete vars
+  produtosFiltrados: Produto[] = [];
+  showDropdown = false;
+  produtoSelecionado: Produto | null = null;
+  
+  // Autocomplete vars para clientes
+  clientesFiltrados: Cliente[] = [];
+  showClienteDropdown = false;
+  clienteSelecionado: Cliente | null = null;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -53,26 +64,21 @@ export class VendaFormComponent implements OnInit {
   initializeForm(): void {
     this.form = new UntypedFormGroup({
       cliente: new UntypedFormControl('', Validators.compose([Validators.required])),
-      // produto: new UntypedFormControl('', Validators.required),
-      // quantidade: new UntypedFormControl('', [Validators.required, Validators.min(0.01)]),
-      // unidadeMedida: new UntypedFormControl('', Validators.required),
       data: new UntypedFormControl(this.getToday(), Validators.required),
-      // preco: new UntypedFormControl('', [Validators.required, Validators.min(0.01)]),
-    });
-    this.formProdutos = new UntypedFormGroup({
-      produto: new UntypedFormControl('', Validators.required),
+    }); this.formProdutos = new UntypedFormGroup({
+      produto: new UntypedFormControl(''),
       quantidade: new UntypedFormControl('', [Validators.required, Validators.min(0.01)]),
       unidadeMedida: new UntypedFormControl('', Validators.required),
       preco: new UntypedFormControl('', [Validators.required, Validators.min(0.01)]),
     });
   }
-  loadValues(): void {
-    this.loading = true;
 
-    // Carregar clientes
+  loadValues(): void {
+    this.loading = true;    // Carregar clientes
     this.clienteService.listarClientes().subscribe({
       next: (data) => {
         this.clientes = data;
+        this.clientesFiltrados = data;
       },
       error: (error) => {
         console.error('Erro ao carregar clientes:', error);
@@ -89,12 +95,11 @@ export class VendaFormComponent implements OnInit {
         console.error('Erro ao carregar unidades:', error);
         this.messageService.error('Erro ao carregar unidades de medida');
       }
-    });
-
-    // Carregar produtos
+    });    // Carregar produtos
     this.produtoService.listarProdutos().subscribe({
       next: (data) => {
         this.produtos = data;
+        this.produtosFiltrados = data;
         this.loading = false;
       },
       error: (error) => {
@@ -110,15 +115,17 @@ export class VendaFormComponent implements OnInit {
 
     this.vendaService.listarVendas().subscribe({
       next: (vendas) => {
-        const venda = vendas.find(v => v.id === id);
-        if (venda) {
+        const venda = vendas.find(v => v.id === id);        if (venda) {
           this.form.patchValue({
             cliente: venda.cliente,
             data: venda.data
           });
 
+          // Definir cliente selecionado para o autocomplete
+          this.clienteSelecionado = this.clientes.find(c => c.nome === venda.cliente) || null;
+
           this.produtosVenda = venda.produtos ? JSON.parse(JSON.stringify(venda.produtos)) : [];
-        } else {
+        }else {
           this.messageService.error('Venda não encontrada');
           this.voltarParaLista();
         }
@@ -131,7 +138,81 @@ export class VendaFormComponent implements OnInit {
         this.voltarParaLista();
       }
     });
-  }  onSelectProduto(): void {
+  }
+
+  // Autocomplete methods
+  onProdutoInputChange(event: any): void {
+    const valor = event.target.value;
+    this.formProdutos.get('produto')?.setValue(valor);
+
+    // Verificar se o valor digitado corresponde a um produto selecionado
+    if (this.produtoSelecionado && this.produtoSelecionado.nome !== valor) {
+      this.produtoSelecionado = null;
+      this.limparCamposProduto();
+    }
+
+    if (valor.length > 0) {
+      this.produtosFiltrados = this.produtos.filter(produto =>
+        produto.nome.toLowerCase().includes(valor.toLowerCase())
+      ).slice(0, 10); // Limitar a 10 resultados para performance
+      this.showDropdown = this.produtosFiltrados.length > 0;
+    } else {
+      this.produtosFiltrados = [];
+      this.showDropdown = false;
+      this.produtoSelecionado = null;
+      this.limparCamposProduto();
+    }
+  }
+
+  selecionarProduto(produto: Produto): void {
+    this.produtoSelecionado = produto;
+    this.formProdutos.get('produto')?.setValue(produto.nome);
+    this.showDropdown = false;
+
+    // Preencher dados automaticamente
+    this.formProdutos.get('preco')?.setValue(produto.preco_venda);
+
+    if (produto.unidadeMedida) {
+      this.formProdutos.get('unidadeMedida')?.setValue(produto.unidadeMedida);
+    }
+
+    // Focar no campo quantidade
+    setTimeout(() => {
+      const qtdInput = document.getElementById('quantidade');
+      if (qtdInput) {
+        qtdInput.focus();
+        if (!this.formProdutos.get('quantidade')?.value) {
+          this.formProdutos.get('quantidade')?.setValue(1);
+        }
+      }
+    }, 100);
+  }
+
+  onProdutoBlur(): void {
+    // Delay para permitir clique na opção
+    setTimeout(() => {
+      this.showDropdown = false;
+    }, 200);
+  }
+
+  onProdutoFocus(): void {
+    const valor = this.formProdutos.get('produto')?.value || '';
+    if (valor.length > 0) {
+      this.produtosFiltrados = this.produtos.filter(produto =>
+        produto.nome.toLowerCase().includes(valor.toLowerCase())
+      ).slice(0, 10);
+      this.showDropdown = this.produtosFiltrados.length > 0;
+    }
+  }
+
+  limparCamposProduto(): void {
+    this.formProdutos.patchValue({
+      preco: '',
+      unidadeMedida: ''
+    });
+  }
+
+  onSelectProduto(): void {
     const produtoSelecionado = this.formProdutos.get('produto')?.value;
     if (produtoSelecionado) {
       // Preencher o preço de venda do produto automaticamente
@@ -155,19 +236,20 @@ export class VendaFormComponent implements OnInit {
       }, 100);
     }
   }
+
   getProdutoSelecionado(): Produto | null {
-    return this.formProdutos.get('produto')?.value || null;
+    return this.produtoSelecionado;
   }
 
   calcularLucroPrevisto(): number {
     const produto = this.getProdutoSelecionado();
     const quantidade = this.formProdutos.get('quantidade')?.value || 0;
     const precoVenda = this.formProdutos.get('preco')?.value || 0;
-    
+
     if (!produto || !quantidade || !precoVenda) {
       return 0;
     }
-    
+
     const lucroUnitario = precoVenda - produto.preco_compra;
     return lucroUnitario * quantidade;
   }
@@ -175,22 +257,26 @@ export class VendaFormComponent implements OnInit {
   calcularMargemLucro(): number {
     const produto = this.getProdutoSelecionado();
     const precoVenda = this.formProdutos.get('preco')?.value || 0;
-    
+
     if (!produto || !precoVenda || produto.preco_compra <= 0) {
       return 0;
     }
-    
+
     const lucroUnitario = precoVenda - produto.preco_compra;
     return (lucroUnitario / precoVenda) * 100;
   }
-
   adicionarProduto(): void {
-    const produto = this.formProdutos.get('produto')?.value;
+    const produto = this.produtoSelecionado;
     const quantidade = this.formProdutos.get('quantidade')?.value;
     const preco = this.formProdutos.get('preco')?.value;
     const unidadeMedida = this.formProdutos.get('unidadeMedida')?.value;
 
-    if (!produto || !quantidade || !preco || !unidadeMedida) {
+    if (!produto) {
+      this.messageService.info("Selecione um produto válido");
+      return;
+    }
+
+    if (!quantidade || !preco || !unidadeMedida) {
       this.messageService.info("Preencha todos os campos do produto");
       return;
     }
@@ -205,14 +291,10 @@ export class VendaFormComponent implements OnInit {
       return;
     }
 
-    // Verificar se há estoque suficiente
-    if (produto.estoque < quantidade) {
-      this.messageService.info(`Estoque insuficiente para ${produto.nome}. Estoque disponível: ${produto.estoque}`);
-      return;
-    }    // Criar o item do produto
+    // Criar o item do produto
     const lucroUnitario = preco - produto.preco_compra;
     const lucroTotal = lucroUnitario * quantidade;
-    
+
     const novoProduto = {
       produto_id: produto.id,
       nome: produto.nome,
@@ -226,15 +308,15 @@ export class VendaFormComponent implements OnInit {
 
     // Adicionar à lista
     this.produtosVenda.push(novoProduto);
-    this.messageService.success(`${novoProduto.nome} adicionado à venda`);
-
-    // Limpar os campos do produto no formulário
+    this.messageService.success(`${novoProduto.nome} adicionado à venda`);    // Limpar os campos do produto no formulário
     this.formProdutos.patchValue({
       produto: '',
       quantidade: '',
       preco: '',
       unidadeMedida: ''
     });
+    this.produtoSelecionado = null;
+    this.showDropdown = false;
   }
 
   removerProduto(index: number): void {
@@ -260,20 +342,24 @@ export class VendaFormComponent implements OnInit {
     if (this.produtosVenda.length === 0) {
       this.messageService.info("Adicione pelo menos um produto à venda.");
       return;
-    }
-
-    const cliente = this.form.get('cliente')?.value;
+    }    const cliente = this.form.get('cliente')?.value;
     const data = this.form.get('data')?.value;
-    
+
     if (!cliente || cliente === '') {
       this.messageService.error("Cliente é obrigatório");
       return;
     }
-    
+
+    // Validar se o cliente digitado existe na lista
+    if (!this.clienteSelecionado) {
+      this.messageService.error("Selecione um cliente válido da lista");
+      return;
+    }
+
     if (!data) {
       this.messageService.error("Data é obrigatória");
       return;
-    }    const venda: Venda = {
+    }const venda: Venda = {
       produtos: this.produtosVenda,
       data: data,
       cliente: cliente,
@@ -283,11 +369,11 @@ export class VendaFormComponent implements OnInit {
 
     // Debug: verificar se há campos undefined
     console.log('Venda a ser salva:', venda);
-      // Verificar se todos os produtos têm os campos necessários
+    // Verificar se todos os produtos têm os campos necessários
     for (const produto of venda.produtos) {
-      if (!produto.produto_id || !produto.nome || produto.quantidade === undefined || 
-          produto.preco_venda === undefined || produto.preco_compra === undefined ||
-          produto.total === undefined) {
+      if (!produto.produto_id || !produto.nome || produto.quantidade === undefined ||
+        produto.preco_venda === undefined || produto.preco_compra === undefined ||
+        produto.total === undefined) {
         console.error('Produto com campos undefined:', produto);
         this.messageService.error('Erro nos dados do produto. Verifique todos os campos.');
         this.loaderService.closeLoading();
@@ -303,7 +389,7 @@ export class VendaFormComponent implements OnInit {
         if (produtoAtual) {
           const novoEstoque = produtoAtual.estoque - produto.quantidade;
           if (novoEstoque < 0) {
-            throw new Error(`Estoque insuficiente para o produto: ${produtoAtual.nome}. Estoque atual: ${produtoAtual.estoque}, quantidade vendida: ${produto.quantidade}`);
+            this.messageService.info(`Estoque negativado para o produto: ${produtoAtual.nome}`);
           }
           await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
         }
@@ -352,5 +438,54 @@ export class VendaFormComponent implements OnInit {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  // Autocomplete methods para clientes
+  onClienteInputChange(event: any): void {
+    const valor = event.target.value;
+    this.form.get('cliente')?.setValue(valor);
+
+    // Verificar se o valor digitado corresponde a um cliente selecionado
+    if (this.clienteSelecionado && this.clienteSelecionado.nome !== valor) {
+      this.clienteSelecionado = null;
+    }
+
+    if (valor.length > 0) {
+      this.clientesFiltrados = this.clientes.filter(cliente =>
+        cliente.nome.toLowerCase().includes(valor.toLowerCase())
+      ).slice(0, 10); // Limitar a 10 resultados para performance
+      this.showClienteDropdown = this.clientesFiltrados.length > 0;
+    } else {
+      this.clientesFiltrados = [];
+      this.showClienteDropdown = false;
+      this.clienteSelecionado = null;
+    }
+  }
+
+  selecionarCliente(cliente: Cliente): void {
+    this.clienteSelecionado = cliente;
+    this.form.get('cliente')?.setValue(cliente.nome);
+    this.showClienteDropdown = false;
+  }
+
+  onClienteBlur(): void {
+    // Delay para permitir clique na opção
+    setTimeout(() => {
+      this.showClienteDropdown = false;
+    }, 200);
+  }
+
+  onClienteFocus(): void {
+    const valor = this.form.get('cliente')?.value || '';
+    if (valor.length > 0) {
+      this.clientesFiltrados = this.clientes.filter(cliente =>
+        cliente.nome.toLowerCase().includes(valor.toLowerCase())
+      ).slice(0, 10);
+      this.showClienteDropdown = this.clientesFiltrados.length > 0;
+    }
+  }
+
+  getClienteSelecionado(): Cliente | null {
+    return this.clienteSelecionado;
   }
 }

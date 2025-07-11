@@ -143,37 +143,56 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Paginação -->
-        <div class="flex flex-col md:flex-row justify-between items-center mt-6 space-y-4 md:space-y-0">
-            <!-- Seletor de itens por página -->
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-700">Itens por página:</span>
-                <select [(ngModel)]="pageSize" (change)="alterarTamanhoPagina($event)" 
-                    class="border border-gray-300 rounded px-2 py-1 text-sm">
-                    <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
-                </select>
-            </div>
-
-            <!-- Informações de paginação -->
-            <div class="text-sm text-gray-700">
-                Mostrando {{ items.length }} vendas
-            </div>
-
-            <!-- Controles de navegação -->
-            <div class="flex items-center space-x-2">
-                <button (click)="paginaAnterior()" [disabled]="currentPage === 0" 
-                    class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Anterior
-                </button>
-                <span class="text-sm text-gray-700">
-                    Página {{ currentPage + 1 }}
+        </div>        <!-- Controles de Paginação -->
+        <div class="flex flex-col md:flex-row justify-between items-center mt-4 px-2">
+            <!-- Informação da página -->
+            <div class="text-sm text-gray-600 mb-2 md:mb-0">
+                <span *ngIf="totalItems > 0">
+                    Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, totalItems)
+                    }} de {{ totalItems }} vendas
                 </span>
-                <button (click)="proximaPagina()" [disabled]="items.length < pageSize" 
-                    class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Próxima
+                <span *ngIf="totalItems === 0">
+                    Nenhum resultado encontrado
+                </span>
+            </div>
+
+            <!-- Navegação entre páginas -->
+            <div class="flex items-center space-x-2" *ngIf="totalItems > 0">
+                <!-- Botão para primeira página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                    (click)="primeiraPagina()">
+                    <i class="fa-solid fa-angles-left"></i>
                 </button>
+
+                <!-- Botão para página anterior -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                    (click)="paginaAnterior()">
+                    <i class="fa-solid fa-angle-left"></i>
+                </button>
+
+                <!-- Indicador de página atual -->
+                <span class="px-3 py-1">
+                    Página {{ currentPage }} de {{ totalPages || 1 }}
+                </span>
+
+                <!-- Botão para próxima página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage >= totalPages"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage >= totalPages, 'cursor-pointer': currentPage < totalPages}"
+                    (click)="proximaPagina()">
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+            </div>
+
+            <!-- Seletor de itens por página -->
+            <div class="flex items-center space-x-2 mt-2 md:mt-0" *ngIf="totalItems > 0">
+                <span class="text-sm text-gray-600">Itens por página:</span>
+                <select class="border rounded px-2 py-1 text-sm" (change)="alterarTamanhoPagina($event)">
+                    <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">
+                        {{ size }}
+                    </option>
+                </select>
             </div>
         </div>
     </div>

@@ -120,7 +120,7 @@ export class PrintService {
 
         // --- CABEÇALHO ---
         pdf.setFont('helvetica', 'bold');
-        adicionarLinha('CEASA ESTOQUE', 'center', 12);
+        adicionarLinha('R e K FRUTAS', 'center', 12);
         pdf.setFont('helvetica', 'normal');
         adicionarLinha('CUPOM NÃO FISCAL', 'center', 10);
 
@@ -157,7 +157,7 @@ export class PrintService {
         alturaAtual += 2;
 
         // --- PRODUTOS ---
-        pdf.setFont('courier', 'normal');
+        pdf.setFont('courier', 'bold');
 
         venda.produtos.forEach((produto) => {
             // Nome do produto (truncado se necessário)

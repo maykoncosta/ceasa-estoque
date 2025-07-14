@@ -18,6 +18,10 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   showFormModal = false;
   selectedProduto: Produto | null = null;
   
+  // Modal de ajuste de estoque
+  showEstoqueModal = false;
+  produtoParaAjuste: Produto | null = null;
+  
   // Filtros específicos
   filtroAtivo: string | null = null;
   produtosMaisVendidosIds: string[] = [];
@@ -46,7 +50,6 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       this.unidades = data;
     });
   }
-
   // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
   override async buscarItensPaginados(
     pageSize: number, 
@@ -56,15 +59,6 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     // Se há filtro de baixo estoque ativo, usar o método específico
     if (this.filtroAtivo === 'baixo-estoque') {
       return this.produtoService.buscarProdutosBaixoEstoquePaginados(pageSize, startAfterDoc);
-    }
-    
-    // Se há filtro de produtos mais vendidos ativo, usar o método específico
-    if (this.filtroAtivo === 'mais-vendidos' && this.produtosMaisVendidosIds.length > 0) {
-      return this.produtoService.buscarProdutosMaisVendidosPaginados(
-        pageSize, 
-        startAfterDoc, 
-        this.produtosMaisVendidosIds
-      );
     }
     
     // Caso contrário, usar o método padrão
@@ -169,5 +163,39 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.produtosMaisVendidosIds = [];
     // Recarregar dados sem filtros
     this.listarItensPaginados();
+  }
+
+  // Métodos para ajuste de estoque
+  openEstoqueModal(produto: Produto): void {
+    this.produtoParaAjuste = produto;
+    this.showEstoqueModal = true;
+  }
+
+  closeEstoqueModal(): void {
+    this.showEstoqueModal = false;
+    this.produtoParaAjuste = null;
+  }
+  async ajustarEstoque(event: { produto: Produto, ajuste: number }): Promise<void> {
+    this.loaderService.showLoading();
+    
+    try {
+      const novoEstoque = await this.produtoService.ajustarEstoque(
+        event.produto, 
+        event.ajuste
+      );
+      
+      this.messageService.success(
+        `Estoque ajustado com sucesso! Novo estoque: ${novoEstoque}`
+      );
+      
+      this.closeEstoqueModal();
+      this.listarItensPaginados(); // Recarregar a lista para mostrar o novo estoque
+      
+    } catch (error) {
+      console.error('Erro ao ajustar estoque:', error);
+      this.messageService.error('Erro ao ajustar estoque');
+    } finally {
+      this.loaderService.closeLoading();
+    }
   }
 }

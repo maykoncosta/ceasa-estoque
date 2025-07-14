@@ -15,6 +15,18 @@ export interface Produto {
   unidadeMedida: UnidadeMedida
 }
 
+export interface AjusteEstoque {
+  id?: string;
+  produto_id: string;
+  produto_nome: string;
+  empresa_id: string;
+  estoque_anterior: number;
+  quantidade_ajuste: number;
+  estoque_novo: number;
+  data: any;
+  usuario_id: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -268,65 +280,46 @@ export class ProdutoService {
     const produtoDoc = doc(this.firestore, `produtos/${id}`);
     return deleteDoc(produtoDoc) ;
   }
-
-  // Método específico para buscar produtos mais vendidos baseado em lista de IDs
-  async buscarProdutosMaisVendidosPaginados(
-    pageSize: number, 
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
-    produtosMaisVendidosIds: string[] = []
-  ): Promise<PaginatedResult<Produto>> {
+  // Método para ajustar estoque com histórico
+  async ajustarEstoque(produto: Produto, quantidadeAjuste: number) {
     const user = this.auth.currentUser;
-    if (!user || produtosMaisVendidosIds.length === 0) return { items: [], total: 0 };
+    if (!user) throw new Error('Usuário não autenticado');
 
-    const produtosRef = collection(this.firestore, 'produtos');
+    const novoEstoque = produto.estoque + quantidadeAjuste;
     
-    // Query para contagem total de produtos mais vendidos
-    const countQuery = query(
-      produtosRef, 
+    // Criar o registro de ajuste de estoque
+    const ajusteEstoque: AjusteEstoque = {
+      produto_id: produto.id,
+      produto_nome: produto.nome,
+      empresa_id: user.uid,
+      estoque_anterior: produto.estoque,
+      quantidade_ajuste: quantidadeAjuste,
+      estoque_novo: novoEstoque,
+      data: new Date(),
+      usuario_id: user.uid
+    };
+
+    // Atualizar o estoque do produto
+    await this.atualizarProduto(produto.id, { estoque: novoEstoque });
+    
+    // Registrar o histórico do ajuste
+    await addDoc(collection(this.firestore, 'ajustes_estoque'), ajusteEstoque);
+    
+    return novoEstoque;
+  }
+
+  // Método para listar histórico de ajustes de estoque
+  listarAjustesEstoque(): Observable<AjusteEstoque[]> {
+    const user = this.auth.currentUser;
+    if (!user) return of([]);
+
+    const ajustesRef = collection(this.firestore, 'ajustes_estoque');
+    const q = query(
+      ajustesRef, 
       where('empresa_id', '==', user.uid),
-      where('id', 'in', produtosMaisVendidosIds)
+      orderBy('data', 'desc')
     );
     
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
-    // Construir a query paginada para produtos mais vendidos
-    let queryConstraints: any[] = [
-      where('empresa_id', '==', user.uid),
-      where('id', 'in', produtosMaisVendidosIds),
-      orderBy('nome') // Ordenar por nome alfabético
-    ];
-    
-    // Adicionar startAfter para paginação
-    if (startAfterDoc) {
-      queryConstraints.push(startAfter(startAfterDoc));
-    }
-    
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
-    
-    // Executar a query
-    const paginatedQuery = query(produtosRef, ...queryConstraints);
-    const snapshot = await getDocs(paginatedQuery);
-    
-    const produtos: Produto[] = [];
-    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
-    
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      produtos.push({
-        id: doc.id,
-        empresa_id: data['empresa_id'],
-        nome: data['nome'],
-        preco_compra: data['preco_compra'],
-        preco_venda: data['preco_venda'],
-        estoque: data['estoque'],
-        unidadeMedida: data['unidadeMedida']
-      });
-      lastVisible = doc;
-    });
-    
-    return { items: produtos, total, lastVisible };
+    return collectionData(q, { idField: 'id' }) as Observable<AjusteEstoque[]>;
   }
 }

@@ -64,8 +64,10 @@
                         {{produto.estoque}}</td>
                     <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.preco_compra | currency: 'R$'}}</td>
                     <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.preco_venda | currency: 'R$'}}</td>
-                    <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.unidadeMedida}}</td>
-                    <td class="sm:p-2 flex justify-around text-right">
+                    <td class="sm:p-1 text-sm md:text-base lg:text-base">{{produto.unidadeMedida}}</td>                    <td class="sm:p-2 flex justify-around text-right gap-2">
+                        <i class="fa-solid fa-boxes-stacked cursor-pointer text-blue-600 hover:text-blue-800" 
+                           (click)="openEstoqueModal(produto)" 
+                           title="Ajustar Estoque"></i>
                         <i class="fa-regular fa-pen-to-square cursor-pointer" (click)="onEditItem(produto)"></i>
                         <i class="fa-solid fa-trash cursor-pointer" (click)="showModalDelete(produto)"></i>
                     </td>
@@ -138,6 +140,11 @@
 <app-produto-form-modal [show]="showFormModal" [isEdit]="onEdit" [produto]="selectedProduto" [unidades]="unidades"
     (save)="saveProdutoFromModal($event)" (cancel)="closeFormModal()">
 </app-produto-form-modal>
+
+<!-- Modal para ajustar estoque -->
+<app-produto-estoque-modal [show]="showEstoqueModal" [produto]="produtoParaAjuste"
+    (onSave)="ajustarEstoque($event)" (onCancel)="closeEstoqueModal()">
+</app-produto-estoque-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">
 </app-confirm-modal>

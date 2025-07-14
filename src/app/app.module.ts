@@ -8,6 +8,7 @@ import { LoginModule } from './pages/login/login.module';
 import { SidebarComponent } from './pages/sidebar/sidebar.component';
 import { ProdutoComponent } from './pages/produto/produto.component';
 import { ProdutoFormModalComponent } from './pages/produto/produto-form-modal/produto-form-modal.component';
+import { ProdutoEstoqueModalComponent } from './pages/produto/produto-estoque-modal/produto-estoque-modal.component';
 import { UnidadeMedidaFormModalComponent } from './pages/unidade-medida/unidade-medida-form-modal/unidade-medida-form-modal.component';
 import { ClienteFormModalComponent } from './pages/cliente/cliente-form-modal/cliente-form-modal.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -36,9 +37,9 @@ registerLocaleData(localePt);
 @NgModule({
   declarations: [
     AppComponent,
-    SidebarComponent,
-    ProdutoComponent,
+    SidebarComponent,    ProdutoComponent,
     ProdutoFormModalComponent,
+    ProdutoEstoqueModalComponent,
     UnidadeMedidaFormModalComponent,
     ClienteFormModalComponent,
     MessageComponent,

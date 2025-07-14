@@ -28,7 +28,7 @@ export class VendaFormComponent implements OnInit {
   produtosFiltrados: Produto[] = [];
   showDropdown = false;
   produtoSelecionado: Produto | null = null;
-  
+
   // Autocomplete vars para clientes
   clientesFiltrados: Cliente[] = [];
   showClienteDropdown = false;
@@ -116,16 +116,34 @@ export class VendaFormComponent implements OnInit {
     this.vendaService.listarVendas().subscribe({
       next: (vendas) => {
         const venda = vendas.find(v => v.id === id);        if (venda) {
+          // Converter a data para o formato correto do input date
+          let dataFormatada = '';
+          if (venda.data) {
+            try {
+              const dataObj = venda.data.toDate ? venda.data.toDate() : new Date(venda.data);
+              // Usar getFullYear, getMonth, getDate para evitar problemas de fuso horário
+              const year = dataObj.getFullYear();
+              const month = String(dataObj.getMonth() + 1).padStart(2, '0');
+              const day = String(dataObj.getDate()).padStart(2, '0');
+              dataFormatada = `${year}-${month}-${day}`;
+            } catch (error) {
+              console.error('Erro ao formatar data:', error);
+              dataFormatada = this.getToday();
+            }
+          } else {
+            dataFormatada = this.getToday();
+          }
+
           this.form.patchValue({
             cliente: venda.cliente,
-            data: venda.data
+            data: dataFormatada
           });
 
           // Definir cliente selecionado para o autocomplete
           this.clienteSelecionado = this.clientes.find(c => c.nome === venda.cliente) || null;
 
           this.produtosVenda = venda.produtos ? JSON.parse(JSON.stringify(venda.produtos)) : [];
-        }else {
+        } else {
           this.messageService.error('Venda não encontrada');
           this.voltarParaLista();
         }
@@ -162,7 +180,7 @@ export class VendaFormComponent implements OnInit {
       this.produtoSelecionado = null;
       this.limparCamposProduto();
     }
-  }  selecionarProduto(produto: Produto): void {
+  } selecionarProduto(produto: Produto): void {
     this.produtoSelecionado = produto;
     this.formProdutos.get('produto')?.setValue(produto.nome);
     this.showDropdown = false;
@@ -339,7 +357,8 @@ export class VendaFormComponent implements OnInit {
     if (this.produtosVenda.length === 0) {
       this.messageService.info("Adicione pelo menos um produto à venda.");
       return;
-    }    const cliente = this.form.get('cliente')?.value;
+    }
+    const cliente = this.form.get('cliente')?.value;
     const data = this.form.get('data')?.value;
 
     if (!cliente || cliente === '') {
@@ -351,14 +370,19 @@ export class VendaFormComponent implements OnInit {
     if (!this.clienteSelecionado) {
       this.messageService.error("Selecione um cliente válido da lista");
       return;
-    }
-
-    if (!data) {
+    }    if (!data) {
       this.messageService.error("Data é obrigatória");
       return;
-    }const venda: Venda = {
+    } 
+
+    // Converter a data para evitar problemas de timezone
+    // Criar data com horário fixo (meio-dia) para evitar mudanças de fuso horário
+    const [year, month, day] = data.split('-');
+    const dataVenda = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+
+    const venda: Venda = {
       produtos: this.produtosVenda,
-      data: data,
+      data: dataVenda,
       cliente: cliente,
       valor_total: this.calcularTotal(),
       lucro_total: this.calcularLucroTotal()

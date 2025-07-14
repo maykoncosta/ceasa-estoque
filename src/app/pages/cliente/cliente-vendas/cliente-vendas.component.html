@@ -1,0 +1,173 @@
+<div class="mx-auto w-full overflow-hidden rounded-sm bg-white shadow-md p-2 sm:p-1 md:p-4">
+    <div class="flex flex-col">
+        <!-- Cabeçalho -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Vendas do Cliente</h1>
+                <p class="text-lg text-gray-600 mt-1">{{ nomeCliente }}</p>
+            </div>
+            <button 
+                (click)="voltarParaClientes()"
+                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2"></i>
+                Voltar para Clientes
+            </button>
+        </div>
+
+        <!-- Cards de Resumo -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" *ngIf="vendas.length > 0">
+            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <h3 class="text-sm font-medium text-gray-600">Total Geral</h3>
+                <p class="text-2xl font-bold text-blue-600">{{ calcularTotalGeral() | currency:'BRL' }}</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                <h3 class="text-sm font-medium text-gray-600">Total Pago</h3>
+                <p class="text-2xl font-bold text-green-600">{{ calcularTotalPago() | currency:'BRL' }}</p>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                <h3 class="text-sm font-medium text-gray-600">Saldo Devedor</h3>
+                <p class="text-2xl font-bold text-red-600">{{ calcularTotalSaldo() | currency:'BRL' }}</p>
+            </div>
+        </div>
+
+        <!-- Tabela de Vendas -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full border-collapse shadow-sm rounded-lg">
+                <thead>
+                    <tr class="border-b-2 bg-blue-100">
+                        <th class="p-3 text-left text-sm font-medium text-gray-700">Data</th>
+                        <th class="p-3 text-right text-sm font-medium text-gray-700">Valor Total</th>
+                        <th class="p-3 text-right text-sm font-medium text-gray-700">Valor Pago</th>
+                        <th class="p-3 text-right text-sm font-medium text-gray-700">Saldo</th>
+                        <th class="p-3 text-center text-sm font-medium text-gray-700">Status</th>
+                        <th class="p-3 text-center text-sm font-medium text-gray-700">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let venda of vendas" class="border-b hover:bg-gray-50 transition-colors">
+                        <td class="p-3 text-sm text-gray-800">{{ formatarData(venda.data) }}</td>
+                        <td class="p-3 text-sm text-right font-medium text-gray-800">
+                            {{ venda.valor_total | currency:'BRL' }}
+                        </td>
+                        <td class="p-3 text-sm text-right">
+                            <div *ngIf="vendaEditando !== venda.id; else editandoPago">
+                                <span class="font-medium" 
+                                      [ngClass]="{'text-green-600': (venda.valor_pago || 0) > 0, 'text-gray-500': (venda.valor_pago || 0) === 0}">
+                                    {{ (venda.valor_pago || 0) | currency:'BRL' }}
+                                </span>
+                            </div>
+                            <ng-template #editandoPago>
+                                <div class="flex items-center space-x-2">
+                                    <input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="0"
+                                        [max]="venda.valor_total"
+                                        [(ngModel)]="valorPagoTemp[venda.id]"
+                                        class="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <button 
+                                        (click)="salvarValorPago(venda)"
+                                        class="text-green-600 hover:text-green-800 p-1 bg-transparent"
+                                        title="Salvar">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                    <button 
+                                        (click)="cancelarEdicao()"
+                                        class="text-red-600 hover:text-red-800 p-1 bg-transparent"
+                                        title="Cancelar">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </ng-template>
+                        </td>
+                        <td class="p-3 text-sm text-right font-medium"
+                            [ngClass]="{'text-red-600': calcularSaldo(venda) > 0, 'text-green-600': calcularSaldo(venda) <= 0}">
+                            {{ calcularSaldo(venda) | currency:'BRL' }}
+                        </td>
+                        <td class="p-3 text-center">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                  [ngClass]="{
+                                    'bg-green-100 text-green-800': isVendaPaga(venda),
+                                    'bg-red-100 text-red-800': !isVendaPaga(venda)
+                                  }">
+                                {{ isVendaPaga(venda) ? 'Pago' : 'Pendente' }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button 
+                                *ngIf="vendaEditando !== venda.id"
+                                (click)="iniciarEdicao(venda)"
+                                class="text-blue-600 hover:text-blue-800 p-1 bg-transparent"
+                                title="Editar valor pago">
+                                <i class="fa-solid fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Estado vazio -->
+                    <tr *ngIf="vendas.length === 0">
+                        <td colspan="6" class="p-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fa-solid fa-receipt text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-lg">Nenhuma venda encontrada</p>
+                                <p class="text-sm">Este cliente ainda não possui vendas registradas</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Controles de Paginação -->
+        <div class="flex flex-col md:flex-row justify-between items-center mt-4 px-2" *ngIf="totalItems > 0">
+            <!-- Informação da página -->
+            <div class="text-sm text-gray-600 mb-2 md:mb-0">
+                <span>
+                    Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, totalItems) }} de {{ totalItems }} vendas
+                </span>
+            </div>
+
+            <!-- Navegação entre páginas -->
+            <div class="flex items-center space-x-2">
+                <!-- Botão para primeira página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" 
+                        [disabled]="currentPage === 1"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                        (click)="primeiraPagina()">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+
+                <!-- Botão para página anterior -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" 
+                        [disabled]="currentPage === 1"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
+                        (click)="paginaAnterior()">
+                    <i class="fa-solid fa-angle-left"></i>
+                </button>
+
+                <!-- Indicador de página atual -->
+                <span class="px-3 py-1">
+                    Página {{ currentPage }} de {{ totalPages || 1 }}
+                </span>
+
+                <!-- Botão para próxima página -->
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" 
+                        [disabled]="currentPage >= totalPages"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage >= totalPages, 'cursor-pointer': currentPage < totalPages}"
+                        (click)="proximaPagina()">
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+            </div>
+
+            <!-- Seletor de itens por página -->
+            <div class="flex items-center space-x-2 mt-2 md:mt-0">
+                <span class="text-sm text-gray-600">Itens por página:</span>
+                <select class="border rounded px-2 py-1 text-sm" (change)="alterarTamanhoPagina($event)">
+                    <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">
+                        {{ size }}
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

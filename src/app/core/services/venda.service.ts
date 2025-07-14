@@ -21,6 +21,7 @@ export interface Venda{
   lucro_total?: number;
   data: any;
   cliente: string;
+  valor_pago?: number;
   expandido?: boolean
 }
 
@@ -152,5 +153,71 @@ export class VendaService {
     });
     
     return { items: vendas, total, lastVisible };
+  }
+
+  // Método para buscar vendas de um cliente específico
+  async buscarVendasPorCliente(
+    clienteNome: string,
+    pageSize: number,
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
+  ): Promise<PaginatedResult<Venda>> {
+    const user = this.auth.currentUser;
+    if (!user) return { items: [], total: 0 };
+
+    const vendasRef = collection(this.firestore, 'vendas');
+    const clienteUppercase = clienteNome.toLocaleUpperCase();
+    
+    // Query para contagem total
+    const countQuery = query(
+      vendasRef,
+      where('empresa_id', '==', user.uid),
+      where('cliente', '==', clienteUppercase)
+    );
+    
+    const countSnapshot = await getCountFromServer(countQuery);
+    const total = countSnapshot.data().count;
+    
+    // Query paginada
+    let queryConstraints: any[] = [
+      where('empresa_id', '==', user.uid),
+      where('cliente', '==', clienteUppercase),
+      orderBy('data', 'desc')
+    ];
+    
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
+    
+    queryConstraints.push(limit(pageSize));
+    
+    const paginatedQuery = query(vendasRef, ...queryConstraints);
+    const snapshot = await getDocs(paginatedQuery);
+    
+    const vendas: Venda[] = [];
+    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      vendas.push({
+        id: doc.id,
+        empresa_id: data['empresa_id'],
+        produtos: data['produtos'],
+        valor_total: data['valor_total'],
+        lucro_total: data['lucro_total'],
+        data: data['data'],
+        cliente: data['cliente'],
+        valor_pago: data['valor_pago'] || 0,
+        expandido: false
+      });
+      lastVisible = doc;
+    });
+    
+    return { items: vendas, total, lastVisible };
+  }
+
+  // Método para atualizar valor pago de uma venda
+  async atualizarValorPago(id: string, valorPago: number) {
+    const vendaDoc = doc(this.firestore, 'vendas', id);
+    return await updateDoc(vendaDoc, { valor_pago: valorPago });
   }
 }

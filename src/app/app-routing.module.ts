@@ -9,6 +9,7 @@ import { LoginGuard } from './core/guards/login.guard';
 import { VendaComponent } from './pages/venda/venda.component';
 import { VendaFormComponent } from './pages/venda/venda-form/venda-form.component';
 import { ClienteComponent } from './pages/cliente/cliente.component';
+import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-vendas.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 
 const routes: Routes = [
@@ -16,6 +17,7 @@ const routes: Routes = [
   {path: 'produtos', component: ProdutoComponent, canActivate: [AuthGuard]},
   {path: 'unidades', component: UnidadeMedidaComponent, canActivate: [AuthGuard]},
   {path: 'clientes', component: ClienteComponent, canActivate: [AuthGuard]},
+  {path: 'clientes/:nome/vendas', component: ClienteVendasComponent, canActivate: [AuthGuard]},
   {path: 'vendas', component: VendaComponent, canActivate: [AuthGuard]},
   {path: 'vendas/nova', component: VendaFormComponent, canActivate: [AuthGuard]},
   {path: 'vendas/editar/:id', component: VendaFormComponent, canActivate: [AuthGuard]},

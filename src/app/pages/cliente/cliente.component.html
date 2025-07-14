@@ -50,11 +50,13 @@
                     </th>
                 </tr>
             </thead>
-            <tbody>
-                <tr class="border-b-2" *ngFor="let cliente of items">
+            <tbody>                <tr class="border-b-2" *ngFor="let cliente of items">
                     <td class="sm:p-1 text-left text-sm md:text-base lg:text-base">{{cliente.nome}}</td>
                     <td class="sm:p-1 text-sm md:text-base lg:text-base">{{formatarCelular(cliente.celular)}}</td>
-                    <td class="sm:p-2 flex justify-around text-right">
+                    <td class="sm:p-2 flex justify-around text-right gap-2">
+                        <i class="fa-solid fa-receipt cursor-pointer text-blue-600 hover:text-blue-800" 
+                           (click)="verVendasCliente(cliente.nome)" 
+                           title="Ver vendas do cliente"></i>
                         <i class="fa-regular fa-pen-to-square cursor-pointer" (click)="onEditItem(cliente)"></i>
                         <i class="fa-solid fa-trash cursor-pointer" (click)="showModalDelete(cliente)"></i>
                     </td>

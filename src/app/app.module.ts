@@ -31,6 +31,7 @@ import { ClienteComponent } from './pages/cliente/cliente.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { RelatorioModule } from './pages/relatorio/relatorio.module';
 import { ContaComponent } from './pages/conta/conta.component';
+import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-vendas.component';
 
 registerLocaleData(localePt);
 
@@ -50,6 +51,7 @@ registerLocaleData(localePt);
     VendaComponent,
     VendaFormComponent,
     ContaComponent,
+    ClienteVendasComponent,
   ],
   imports: [
     BrowserModule,

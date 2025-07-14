@@ -73,11 +73,20 @@ export class VendaComponent extends BaseComponent<Venda> {
   toggleExpand(item: any): void {
     item.expandido = !item.expandido;
   }
-
   // Método para formatar data
-  formatarData(dataStr: string): string {
-    const data = new Date(dataStr);
-    return data.toLocaleDateString('pt-BR');
+  formatarData(data: any): string {
+    if (!data) return 'Data não informada';
+    
+    try {
+      const dataObj = data.toDate ? data.toDate() : new Date(data);
+      // Usar getFullYear, getMonth, getDate para evitar problemas de fuso horário
+      const year = dataObj.getFullYear();
+      const month = String(dataObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dataObj.getDate()).padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return 'Data inválida';
+    }
   }
 
   /**

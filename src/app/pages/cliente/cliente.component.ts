@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Cliente, ClienteService } from 'src/app/core/services/cliente.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
@@ -20,13 +20,13 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   // Filtros específicos
   filtroAtivo: string | null = null;
   clientesFrequentesNomes: string[] = [];
-
   constructor(
     messageService: MessageService,
     loaderService: LoaderService,
     private clienteService: ClienteService,
     private phoneValidator: PhoneValidatorService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     super(loaderService, messageService);
   }
@@ -164,5 +164,9 @@ export class ClienteComponent extends BaseComponent<Cliente> {
     this.clientesFrequentesNomes = [];
     // Recarregar dados sem filtros
     this.listarItensPaginados();
+  }
+
+  verVendasCliente(nomeCliente: string): void {
+    this.router.navigate(['/clientes', nomeCliente, 'vendas']);
   }
 }

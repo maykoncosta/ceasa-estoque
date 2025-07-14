@@ -6,6 +6,7 @@ import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
+import { PrintService } from 'src/app/shared/services/print.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 
 @Component({
@@ -25,13 +26,13 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   // Filtros específicos
   filtroAtivo: string | null = null;
   produtosMaisVendidosIds: string[] = [];
-  
-  constructor(
+    constructor(
     messageService: MessageService,
     loaderService: LoaderService,
     private produtoService: ProdutoService,
     private unidadeService: UnidadeMedidaService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private printService: PrintService
   ) {
     super(loaderService, messageService);
   }
@@ -163,7 +164,13 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.produtosMaisVendidosIds = [];
     // Recarregar dados sem filtros
     this.listarItensPaginados();
-  }
+  }  // Método para imprimir produtos
+  imprimirProdutos(): void {
+    try {
+      this.printService.imprimirListaProdutos(this.items);
+    } catch (error) {
+      this.messageService.error(error instanceof Error ? error.message : 'Erro ao imprimir lista de produtos');
+    }  }
 
   // Métodos para ajuste de estoque
   openEstoqueModal(produto: Produto): void {

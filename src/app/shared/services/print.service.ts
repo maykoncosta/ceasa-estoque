@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import { Venda } from 'src/app/core/services/venda.service';
+import { Produto } from 'src/app/core/services/produto.service';
 
 @Injectable({
     providedIn: 'root'
@@ -74,6 +75,175 @@ export class PrintService {
             console.error('Erro ao imprimir cupom:', error);
             throw new Error('Erro ao abrir a tela de impressão. Verifique se o bloqueador de pop-ups está desabilitado.');
         }
+    }
+
+    /**
+     * Imprime lista de produtos com nome e estoque
+     * @param produtos Lista de produtos para impressão
+     */
+    imprimirListaProdutos(produtos: Produto[]): void {
+        if (produtos.length === 0) {
+            throw new Error('Não há produtos para imprimir');
+        }
+
+        // Criar o conteúdo HTML para impressão
+        const conteudoImpressao = this.gerarConteudoListaProdutos(produtos);
+        
+        // Criar um elemento iframe invisível para impressão
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-1000px';
+        iframe.style.left = '-1000px';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+        
+        // Escrever o conteúdo no iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(conteudoImpressao);
+            iframeDoc.close();
+            
+            // Aguardar o carregamento e imprimir
+            iframe.onload = () => {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+                
+                // Remover o iframe após a impressão
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            };
+        } else {
+            document.body.removeChild(iframe);
+            throw new Error('Erro ao preparar a impressão');
+        }
+    }
+
+    private gerarConteudoListaProdutos(produtos: Produto[]): string {
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        const horaAtual = new Date().toLocaleTimeString('pt-BR');
+        
+        let html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Lista de Produtos - CEASA Estoque</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                margin: 0;
+                padding: 8px;
+                color: #333;
+                width: 72mm;
+                font-size: 11px;
+                line-height: 1.2;
+              }
+              .cabecalho {
+                text-align: center;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #333;
+                padding-bottom: 8px;
+              }
+              .titulo {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 2px;
+              }
+              .subtitulo {
+                font-size: 11px;
+                margin-bottom: 4px;
+              }
+              .info-impressao {
+                font-size: 9px;
+                color: #666;
+              }
+              .separador {
+                border-top: 1px dashed #333;
+                margin: 6px 0;
+              }
+              .linha-produto {
+                display: flex;
+                justify-content: space-between;
+                margin: 1px 0;
+                font-size: 10px;
+                overflow: hidden;
+              }
+              .produto-nome {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 45mm;
+                padding-right: 4px;
+              }
+              .produto-estoque {
+                text-align: right;
+                min-width: 12mm;
+                font-weight: bold;
+                flex-shrink: 0;
+              }
+              .estoque-baixo {
+                color: #dc2626;
+              }
+              .estoque-normal {
+                color: #16a34a;
+              }
+              .rodape {
+                margin-top: 12px;
+                text-align: center;
+                font-size: 9px;
+                color: #666;
+                border-top: 1px solid #333;
+                padding-top: 6px;
+              }
+              @media print {
+                body { 
+                  margin: 0; 
+                  padding: 4px;
+                  width: 72mm;
+                }
+                .cabecalho { page-break-inside: avoid; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="cabecalho">
+              <div class="titulo">R e K FRUTAS</div>
+              <div class="subtitulo">LISTA DE PRODUTOS</div>
+              <div class="info-impressao">
+                ${dataAtual} - ${horaAtual}
+              </div>
+            </div>
+            
+            <div class="separador"></div>`;
+
+        // Adicionar os produtos
+        produtos.forEach(produto => {
+            const classeEstoque = produto.estoque <= 0 ? 'estoque-baixo' : 'estoque-normal';
+            const nomeFormatado = produto.nome.length > 20 ? produto.nome.substring(0, 17) + '...' : produto.nome;
+            
+            html += `
+              <div class="linha-produto">
+                <span class="produto-nome">${nomeFormatado}</span>
+                <span class="produto-estoque ${classeEstoque}">${produto.estoque}</span>
+              </div>`;
+        });
+
+        html += `
+            <div class="separador"></div>
+            <div class="rodape">
+              <p>Total: ${produtos.length} produtos</p>
+              <p>Sistema CEASA Estoque</p>
+            </div>
+          </body>
+          </html>`;
+
+        return html;
     }
 
     /**

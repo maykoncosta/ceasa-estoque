@@ -162,9 +162,7 @@ export class VendaFormComponent implements OnInit {
       this.produtoSelecionado = null;
       this.limparCamposProduto();
     }
-  }
-
-  selecionarProduto(produto: Produto): void {
+  }  selecionarProduto(produto: Produto): void {
     this.produtoSelecionado = produto;
     this.formProdutos.get('produto')?.setValue(produto.nome);
     this.showDropdown = false;
@@ -172,8 +170,11 @@ export class VendaFormComponent implements OnInit {
     // Preencher dados automaticamente
     this.formProdutos.get('preco')?.setValue(produto.preco_venda);
 
+    // Definir a unidade de medida do produto (não editável)
     if (produto.unidadeMedida) {
       this.formProdutos.get('unidadeMedida')?.setValue(produto.unidadeMedida);
+    } else {
+      this.formProdutos.get('unidadeMedida')?.setValue('N/A');
     }
 
     // Focar no campo quantidade
@@ -204,14 +205,12 @@ export class VendaFormComponent implements OnInit {
       this.showDropdown = this.produtosFiltrados.length > 0;
     }
   }
-
   limparCamposProduto(): void {
     this.formProdutos.patchValue({
       preco: '',
       unidadeMedida: ''
     });
   }
-
   onSelectProduto(): void {
     const produtoSelecionado = this.formProdutos.get('produto')?.value;
     if (produtoSelecionado) {
@@ -220,7 +219,7 @@ export class VendaFormComponent implements OnInit {
 
       // Preencher a unidade de medida automaticamente
       if (produtoSelecionado.unidadeMedida) {
-        this.formProdutos.get('unidadeMedida')?.setValue(produtoSelecionado.unidadeMedida);
+        this.formProdutos.get('unidadeMedida')?.setValue(produtoSelecionado.unidadeMedida.nome);
       }
 
       // Focar no campo de quantidade após selecionar o produto
@@ -289,9 +288,7 @@ export class VendaFormComponent implements OnInit {
     if (preco <= 0) {
       this.messageService.info("O preço deve ser maior que zero");
       return;
-    }
-
-    // Criar o item do produto
+    }    // Criar o item do produto
     const lucroUnitario = preco - produto.preco_compra;
     const lucroTotal = lucroUnitario * quantidade;
 
@@ -301,7 +298,7 @@ export class VendaFormComponent implements OnInit {
       quantidade: quantidade,
       preco_compra: produto.preco_compra,
       preco_venda: preco,
-      unidade_medida: unidadeMedida.nome,
+      unidade_medida: unidadeMedida, // Agora é uma string diretamente
       total: preco * quantidade,
       lucro: lucroTotal
     };

@@ -50,9 +50,13 @@
                     <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Estoque</th>
                     <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Compra</th>
                     <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Venda</th>
-                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Uni. Medida</th>
-                    <th class="sm:p-2 max-w-24 min-w-16">
-                        <i class="fa-solid fa-plus cursor-pointer" (click)="onCreateItem()"></i>
+                    <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Uni. Medida</th>                    <th class="sm:p-2 max-w-24 min-w-16">
+                        <div class="flex gap-2 justify-center">
+                            <i class="fa-solid fa-print cursor-pointer text-green-600 hover:text-green-800" 
+                               (click)="imprimirProdutos()" 
+                               title="Imprimir Lista"></i>
+                            <i class="fa-solid fa-plus cursor-pointer" (click)="onCreateItem()"></i>
+                        </div>
                     </th>
                 </tr>
             </thead>

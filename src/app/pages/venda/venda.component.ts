@@ -65,7 +65,6 @@ export class VendaComponent extends BaseComponent<Venda> {
 
   // Método para lidar com a exclusão de vendas
   onDeleteItem(): void {
-    console.log('Excluindo venda:', this.itemToDelete);
     this.deleteItem(() => this.vendaService.excluirVenda(this.itemToDelete!.id));
   }
 

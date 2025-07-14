@@ -228,8 +228,8 @@ export abstract class BaseComponent<T> implements OnInit {
     }
 
     onCancel(): void {
-        this.onEdit = false;
-        this.onCreate = false;
+        this.showDeleteModal = false;
+        this.itemToDelete = undefined;
     }
 
     deleteItem(deleteCallback: () => Promise<void>): void {

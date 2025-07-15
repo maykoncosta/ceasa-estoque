@@ -347,8 +347,7 @@ export class VendaFormComponent implements OnInit {
 
   calcularLucroTotal(): number {
     return this.produtosVenda.reduce((lucro, produto) => lucro + (produto.lucro || 0), 0);
-  }
-  salvarVenda(): void {
+  }  async salvarVenda(): Promise<void> {
     if (this.form.invalid) {
       this.messageService.info("Preencha todos os campos obrigatórios.");
       return;
@@ -400,11 +399,10 @@ export class VendaFormComponent implements OnInit {
         this.loaderService.closeLoading();
         return;
       }
-    }
+    }    this.loaderService.showLoading();
 
-    this.loaderService.showLoading();
-
-    const atualizarEstoque = async () => {
+    // Método para baixar estoque na criação (como estava funcionando)
+    const atualizarEstoqueNovoProduto = async () => {
       for (const produto of venda.produtos) {
         const produtoAtual = this.produtos.find(p => p.id === produto.produto_id);
         if (produtoAtual) {
@@ -417,10 +415,36 @@ export class VendaFormComponent implements OnInit {
       }
     };
 
+    // Método para ajustar estoque durante edição (apenas diferenças)
+    const ajustarEstoqueEdicao = async () => {
+      try {
+        // Buscar a venda original para comparar
+        const vendaOriginal = await this.vendaService.buscarVendaPorId(this.vendaId!);
+        if (!vendaOriginal) {
+          throw new Error('Venda original não encontrada');
+        }
+
+        // Calcular as diferenças de estoque
+        await this.calcularEAjustarDiferencasEstoque(vendaOriginal.produtos, venda.produtos);
+      } catch (error) {
+        console.error('Erro ao ajustar estoque na edição:', error);
+        this.messageService.error('Erro ao ajustar estoque. Operação cancelada.');
+        this.loaderService.closeLoading();
+        return false;
+      }
+      return true;
+    };
+
     if (this.isEditing && this.vendaId) {
       venda.id = this.vendaId;
-      this.vendaService.atualizarVenda(this.vendaId, venda).then(async () => {
-        await atualizarEstoque();
+      
+      // Para edição, usar o método de ajuste de diferenças
+      const estoqueAjustado = await ajustarEstoqueEdicao();
+      if (!estoqueAjustado) {
+        return; // Erro no ajuste, operação já foi cancelada
+      }
+
+      this.vendaService.atualizarVenda(this.vendaId, venda).then(() => {
         this.messageService.success('Venda atualizada com sucesso!');
         this.voltarParaLista();
       }).catch(error => {
@@ -429,8 +453,9 @@ export class VendaFormComponent implements OnInit {
         console.error('Erro ao atualizar venda:', error);
       });
     } else {
+      // Para criação, usar o método original
       this.vendaService.criarVenda(venda)?.then(async () => {
-        await atualizarEstoque();
+        await atualizarEstoqueNovoProduto();
         this.messageService.success('Venda criada com sucesso!');
         this.voltarParaLista();
       }).catch((error) => {
@@ -503,6 +528,58 @@ export class VendaFormComponent implements OnInit {
         cliente.nome.toLowerCase().includes(valor.toLowerCase())
       ).slice(0, 10);
       this.showClienteDropdown = this.clientesFiltrados.length > 0;
+    }
+  }
+  /**
+   * Calcula e ajusta as diferenças de estoque entre a venda original e a editada
+   * @param produtosOriginais - Produtos da venda antes da edição
+   * @param produtosEditados - Produtos da venda após a edição
+   */
+  private async calcularEAjustarDiferencasEstoque(produtosOriginais: any[], produtosEditados: any[]): Promise<void> {
+    // Agrupar produtos por ID e somar quantidades (para lidar com produtos duplicados)
+    const agruparProdutos = (produtos: any[]) => {
+      const agrupados: { [key: string]: number } = {};
+      produtos.forEach(produto => {
+        if (agrupados[produto.produto_id]) {
+          agrupados[produto.produto_id] += produto.quantidade;
+        } else {
+          agrupados[produto.produto_id] = produto.quantidade;
+        }
+      });
+      return agrupados;
+    };
+
+    const quantidadesOriginais = agruparProdutos(produtosOriginais);
+    const quantidadesEditadas = agruparProdutos(produtosEditados);
+
+    // Obter todos os produtos únicos (originais e editados)
+    const todosProdutosIds = new Set([
+      ...Object.keys(quantidadesOriginais),
+      ...Object.keys(quantidadesEditadas)
+    ]);
+
+    // Processar cada produto único
+    for (const produtoId of todosProdutosIds) {
+      const qtdOriginal = quantidadesOriginais[produtoId] || 0;
+      const qtdEditada = quantidadesEditadas[produtoId] || 0;
+      const diferenca = qtdEditada - qtdOriginal;
+
+      if (diferenca !== 0) {
+        const produtoAtual = this.produtos.find(p => p.id === produtoId);
+        if (produtoAtual) {
+          const novoEstoque = produtoAtual.estoque - diferenca;
+          
+          if (novoEstoque < 0) {
+            this.messageService.info(`Estoque negativado para o produto: ${produtoAtual.nome}`);
+          }
+          
+          await this.produtoService.atualizarProduto(produtoId, { estoque: novoEstoque });
+          
+          const acao = diferenca > 0 ? 'baixado' : 'devolvido';
+          const sinal = diferenca > 0 ? '-' : '+';
+          console.log(`Estoque ${acao} para ${produtoAtual.nome}: ${sinal}${Math.abs(diferenca)} (Total: ${qtdOriginal} → ${qtdEditada})`);
+        }
+      }
     }
   }
 

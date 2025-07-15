@@ -322,4 +322,20 @@ export class ProdutoService {
     
     return collectionData(q, { idField: 'id' }) as Observable<AjusteEstoque[]>;
   }
+
+  // Método para buscar um produto específico por ID
+  async buscarProdutoPorId(id: string): Promise<Produto | null> {
+    const user = this.auth.currentUser;
+    if (!user) return null;
+
+    const produtosRef = collection(this.firestore, 'produtos');
+    const q = query(produtosRef, where('empresa_id', '==', user.uid));
+    const querySnapshot = await getDocs(q);
+    
+    const produto = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Produto))
+      .find(p => p.id === id);
+    
+    return produto || null;
+  }
 }

@@ -180,6 +180,7 @@ export class PrintService {
                 white-space: nowrap;
                 max-width: 45mm;
                 padding-right: 4px;
+                font-weight: bold;
               }
               .produto-estoque {
                 text-align: right;

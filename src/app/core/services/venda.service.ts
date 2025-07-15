@@ -64,12 +64,44 @@ export class VendaService {
 
     const vendaDoc = doc(this.firestore, 'vendas', id);
     return await updateDoc(vendaDoc, vendaToUpdate);
-  }
+  }  async excluirVenda(id: string) {
+    const user = this.auth.currentUser;
+    if (!user) return;
 
-  async excluirVenda(id: string) {
+    // Primeiro, buscar a venda para obter os produtos vendidos
+    const venda = await this.buscarVendaPorId(id);
+    if (!venda) {
+      throw new Error('Venda não encontrada');
+    }
 
+    // Devolver estoque dos produtos vendidos
+    // Buscar todos os produtos da empresa para fazer o match por ID
+    const produtosRef = collection(this.firestore, 'produtos');
+    const produtosQuery = query(produtosRef, where('empresa_id', '==', user.uid));
+    const produtosSnapshot = await getDocs(produtosQuery);
+    
+    const produtosMap = new Map();
+    produtosSnapshot.docs.forEach(doc => {
+      produtosMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+
+    // Devolver estoque para cada produto da venda
+    for (const produto of venda.produtos) {
+      try {
+        const produtoAtual = produtosMap.get(produto.produto_id);
+        if (produtoAtual) {
+          const novoEstoque = produtoAtual.estoque + produto.quantidade;
+          await updateDoc(doc(this.firestore, 'produtos', produto.produto_id), { estoque: novoEstoque });
+          console.log(`Estoque devolvido para ${produtoAtual.nome}: +${produto.quantidade} (Total: ${novoEstoque})`);
+        }
+      } catch (error) {
+        console.error(`Erro ao devolver estoque do produto ${produto.nome}:`, error);
+        // Continua com os outros produtos mesmo se um falhar
+      }
+    }
+
+    // Após devolver o estoque, excluir a venda
     const vendaDoc = doc(this.firestore, `vendas/${id}`);
-
     return deleteDoc(vendaDoc);
   }
 
@@ -213,6 +245,22 @@ export class VendaService {
     });
     
     return { items: vendas, total, lastVisible };
+  }
+
+  // Método para buscar uma venda específica por ID
+  async buscarVendaPorId(id: string): Promise<Venda | null> {
+    const user = this.auth.currentUser;
+    if (!user) return null;
+
+    const vendasRef = collection(this.firestore, 'vendas');
+    const q = query(vendasRef, where('empresa_id', '==', user.uid));
+    const querySnapshot = await getDocs(q);
+    
+    const venda = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Venda))
+      .find(v => v.id === id);
+    
+    return venda || null;
   }
 
   // Método para atualizar valor pago de uma venda

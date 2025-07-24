@@ -360,14 +360,8 @@ export class VendaFormComponent implements OnInit {
     const cliente = this.form.get('cliente')?.value;
     const data = this.form.get('data')?.value;
 
-    if (!cliente || cliente === '') {
+    if (!cliente || cliente.trim() === '') {
       this.messageService.error("Cliente é obrigatório");
-      return;
-    }
-
-    // Validar se o cliente digitado existe na lista
-    if (!this.clienteSelecionado) {
-      this.messageService.error("Selecione um cliente válido da lista");
       return;
     }    if (!data) {
       this.messageService.error("Data é obrigatória");

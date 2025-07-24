@@ -188,12 +188,6 @@ export class PrintService {
                 font-weight: bold;
                 flex-shrink: 0;
               }
-              .estoque-baixo {
-                color: #dc2626;
-              }
-              .estoque-normal {
-                color: #16a34a;
-              }
               .rodape {
                 margin-top: 12px;
                 text-align: center;
@@ -225,13 +219,12 @@ export class PrintService {
 
         // Adicionar os produtos
         produtos.forEach(produto => {
-            const classeEstoque = produto.estoque <= 0 ? 'estoque-baixo' : 'estoque-normal';
             const nomeFormatado = produto.nome.length > 20 ? produto.nome.substring(0, 17) + '...' : produto.nome;
             
             html += `
               <div class="linha-produto">
                 <span class="produto-nome">${nomeFormatado}</span>
-                <span class="produto-estoque ${classeEstoque}">${produto.estoque}</span>
+                <span class="produto-estoque">${produto.estoque}</span>
               </div>`;
         });
 

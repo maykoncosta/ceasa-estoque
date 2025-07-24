@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
-import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, query, updateDoc, where, limit, orderBy, startAfter, getCountFromServer, getDocs, QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, query, updateDoc, limit, orderBy, startAfter, getCountFromServer, getDocs, QueryDocumentSnapshot, DocumentData, where } from '@angular/fire/firestore';
 import { Observable, of, from, map } from 'rxjs';
 import { UnidadeMedida } from './unidade-medida.service';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
@@ -39,10 +39,32 @@ export class ProdutoService {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
-    const produtosRef = collection(this.firestore, 'produtos');
-    const q = query(produtosRef, where('empresa_id', '==', user.uid));
-    
-    return collectionData(q, { idField: 'id' }) as Observable<Produto[]>;
+    try {
+      const produtosRef = collection(this.firestore, 'produtos');
+      const q = query(produtosRef, where('empresa_id', '==', user.uid));
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const produtos: Produto[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            produtos.push({
+              id: doc.id,
+              empresa_id: data['empresa_id'],
+              nome: data['nome'],
+              preco_compra: data['preco_compra'],
+              preco_venda: data['preco_venda'],
+              estoque: data['estoque'],
+              unidadeMedida: data['unidadeMedida']
+            });
+          });
+          return produtos.sort((a, b) => a.nome.localeCompare(b.nome));
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao criar query de produtos:', error);
+      return of([]);
+    }
   }
 
   // Método com paginação
@@ -313,14 +335,38 @@ export class ProdutoService {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
-    const ajustesRef = collection(this.firestore, 'ajustes_estoque');
-    const q = query(
-      ajustesRef, 
-      where('empresa_id', '==', user.uid),
-      orderBy('data', 'desc')
-    );
-    
-    return collectionData(q, { idField: 'id' }) as Observable<AjusteEstoque[]>;
+    try {
+      const ajustesRef = collection(this.firestore, 'ajustes_estoque');
+      const q = query(
+        ajustesRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('data', 'desc')
+      );
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const ajustes: AjusteEstoque[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            ajustes.push({
+              id: doc.id,
+              produto_id: data['produto_id'],
+              produto_nome: data['produto_nome'],
+              empresa_id: data['empresa_id'],
+              estoque_anterior: data['estoque_anterior'],
+              quantidade_ajuste: data['quantidade_ajuste'],
+              estoque_novo: data['estoque_novo'],
+              data: data['data'],
+              usuario_id: data['usuario_id']
+            });
+          });
+          return ajustes;
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao criar query de ajustes de estoque:', error);
+      return of([]);
+    }
   }
 
   // Método para buscar um produto específico por ID

@@ -16,14 +16,6 @@
 
         <!-- Cards de Resumo -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" *ngIf="vendas.length > 0">
-            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                <h3 class="text-sm font-medium text-gray-600">Total Geral</h3>
-                <p class="text-2xl font-bold text-blue-600">{{ calcularTotalGeral() | currency:'BRL' }}</p>
-            </div>
-            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
-                <h3 class="text-sm font-medium text-gray-600">Total Pago</h3>
-                <p class="text-2xl font-bold text-green-600">{{ calcularTotalPago() | currency:'BRL' }}</p>
-            </div>
             <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
                 <h3 class="text-sm font-medium text-gray-600">Saldo Devedor</h3>
                 <p class="text-2xl font-bold text-red-600">{{ calcularTotalSaldo() | currency:'BRL' }}</p>

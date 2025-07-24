@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData, or, and } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, from, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
 
 export interface UnidadeMedida {
@@ -22,9 +22,29 @@ export class UnidadeMedidaService {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
-    const unidadesRef = collection(this.firestore, 'unidades');
-    const q = query(unidadesRef, where('empresa_id', '==', user.uid));
-    return collectionData(q, { idField: 'id' }) as Observable<UnidadeMedida[]>;
+    try {
+      const unidadesRef = collection(this.firestore, 'unidades');
+      const q = query(unidadesRef, where('empresa_id', '==', user.uid));
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const unidades: UnidadeMedida[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            unidades.push({
+              id: doc.id,
+              nome: data['nome'],
+              descricao: data['descricao'],
+              empresa_id: data['empresa_id']
+            });
+          });
+          return unidades.sort((a, b) => a.nome.localeCompare(b.nome));
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao criar query de unidades:', error);
+      return of([]);
+    }
   }
 
   async adicionarUnidade(unidade: UnidadeMedida) {

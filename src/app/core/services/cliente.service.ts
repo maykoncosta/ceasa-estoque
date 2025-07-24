@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData, or, and } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, from, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
 
 export interface Cliente {
@@ -22,9 +22,29 @@ export class ClienteService {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
-    const clientesRef = collection(this.firestore, 'clientes');
-    const q = query(clientesRef, where('empresa_id', '==', user.uid));
-    return collectionData(q, { idField: 'id' }) as Observable<Cliente[]>;
+    try {
+      const clientesRef = collection(this.firestore, 'clientes');
+      const q = query(clientesRef, where('empresa_id', '==', user.uid));
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const clientes: Cliente[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            clientes.push({
+              id: doc.id,
+              nome: data['nome'],
+              celular: data['celular'],
+              empresa_id: data['empresa_id']
+            });
+          });
+          return clientes.sort((a, b) => a.nome.localeCompare(b.nome));
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao criar query de clientes:', error);
+      return of([]);
+    }
   }
 
   async adicionarCliente(cliente: Cliente) {

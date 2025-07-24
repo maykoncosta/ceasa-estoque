@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, from, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
 
 export interface Venda{
@@ -36,9 +36,39 @@ export class VendaService {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
-    const vendasRef = collection(this.firestore, 'vendas');
-    const q = query(vendasRef, where('empresa_id', '==', user.uid));
-    return collectionData(q, { idField: 'id' }) as Observable<Venda[]>;
+    try {
+      const vendasRef = collection(this.firestore, 'vendas');
+      const q = query(vendasRef, where('empresa_id', '==', user.uid));
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const vendas: Venda[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            vendas.push({
+              id: doc.id,
+              empresa_id: data['empresa_id'],
+              produtos: data['produtos'],
+              valor_total: data['valor_total'],
+              lucro_total: data['lucro_total'],
+              data: data['data'],
+              cliente: data['cliente'],
+              valor_pago: data['valor_pago'],
+              expandido: false
+            });
+          });
+          return vendas.sort((a, b) => {
+            // Ordenar por data (mais recente primeiro)
+            const dataA = a.data?.toDate ? a.data.toDate() : new Date(a.data);
+            const dataB = b.data?.toDate ? b.data.toDate() : new Date(b.data);
+            return dataB.getTime() - dataA.getTime();
+          });
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao criar query de vendas:', error);
+      return of([]);
+    }
   }
 
   async criarVenda(venda: Venda) {
@@ -92,7 +122,6 @@ export class VendaService {
         if (produtoAtual) {
           const novoEstoque = produtoAtual.estoque + produto.quantidade;
           await updateDoc(doc(this.firestore, 'produtos', produto.produto_id), { estoque: novoEstoque });
-          console.log(`Estoque devolvido para ${produtoAtual.nome}: +${produto.quantidade} (Total: ${novoEstoque})`);
         }
       } catch (error) {
         console.error(`Erro ao devolver estoque do produto ${produto.nome}:`, error);

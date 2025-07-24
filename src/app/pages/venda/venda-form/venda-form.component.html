@@ -36,7 +36,7 @@
                             (input)="onClienteInputChange($event)"
                             (focus)="onClienteFocus()"
                             (blur)="onClienteBlur()"
-                            placeholder="Digite o nome do cliente..."
+                            placeholder="Digite o nome do cliente (cadastrado ou não)..."
                             autocomplete="off"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             [class.border-red-500]="form.get('cliente')?.invalid && form.get('cliente')?.touched">
@@ -48,14 +48,18 @@
                                 class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0">
                                 <div class="flex justify-between items-center">
                                     <span class="font-medium">{{ cliente.nome }}</span>
+                                    <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Cadastrado</span>
                                 </div>
                                 <div class="text-xs text-gray-400 mt-1" *ngIf="cliente.celular">
                                     {{ cliente.celular }}
                                 </div>
                             </div>
                             <div *ngIf="clientesFiltrados.length === 0" class="px-3 py-2 text-gray-500 text-sm">
-                                Nenhum cliente encontrado
+                                Nenhum cliente cadastrado encontrado. Você pode continuar digitando qualquer nome.
                             </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Você pode selecionar um cliente cadastrado ou digitar qualquer nome
                         </div>
                     </div>
 

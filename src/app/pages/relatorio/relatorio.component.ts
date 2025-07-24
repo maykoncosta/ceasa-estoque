@@ -112,19 +112,31 @@ export class RelatorioComponent implements OnInit {
     return `${ano}-${mes}-${dia}`;
   }
 
-  // Converte a string de data do Firebase para um objeto Date
-  parsearData(dataString: string): Date {
-    // Verificar se a data é uma string no formato ISO
-    if (typeof dataString === 'string' && dataString.includes('T')) {
-      return new Date(dataString);
+  // Converte a data do Firebase para um objeto Date
+  parsearData(data: any): Date {
+    // Se é um Timestamp do Firebase (tem método toDate)
+    if (data && typeof data.toDate === 'function') {
+      return data.toDate();
     }
-    // Verificar se é apenas uma data (yyyy-MM-dd)
-    if (typeof dataString === 'string' && dataString.includes('-')) {
-      const [ano, mes, dia] = dataString.split('-').map(Number);
+    
+    // Se é uma string no formato ISO
+    if (typeof data === 'string' && data.includes('T')) {
+      return new Date(data);
+    }
+    
+    // Se é uma string de data simples (yyyy-MM-dd)
+    if (typeof data === 'string' && data.includes('-')) {
+      const [ano, mes, dia] = data.split('-').map(Number);
       return new Date(ano, mes - 1, dia);
     }
-    // Caso seja outro formato, retorna a string convertida
-    return new Date(dataString);
+    
+    // Se já é um objeto Date
+    if (data instanceof Date) {
+      return data;
+    }
+    
+    // Caso contrário, tenta converter diretamente
+    return new Date(data);
   }
 
   // Filtra as vendas pelo período selecionado
@@ -135,47 +147,91 @@ export class RelatorioComponent implements OnInit {
     // Configurar o final do dia para a data final
     dataFinal.setHours(23, 59, 59, 999);
     
-    return this.vendas.filter(venda => {
-      const dataVenda = this.parsearData(venda.data);
-      return dataVenda >= dataInicial && dataVenda <= dataFinal;
+    console.log('Período de filtro:', {
+      dataInicial: dataInicial,
+      dataFinal: dataFinal,
+      totalVendas: this.vendas.length
     });
+    
+    const vendasFiltradas = this.vendas.filter(venda => {
+      const dataVenda = this.parsearData(venda.data);
+      const dentroDoPeriodo = dataVenda >= dataInicial && dataVenda <= dataFinal;
+      
+      if (!dentroDoPeriodo) {
+        console.log('Venda fora do período:', {
+          venda: venda.id,
+          dataVenda: dataVenda,
+          cliente: venda.cliente
+        });
+      }
+      
+      return dentroDoPeriodo;
+    });
+    
+    console.log('Vendas após filtro:', vendasFiltradas.length);
+    return vendasFiltradas;
   }
 
   // Gera as estatísticas com base nas vendas do período
   gerarEstatisticas(vendasFiltradas: Venda[]): ResumoVendas {
+    console.log('Gerando estatísticas para vendas:', vendasFiltradas);
+    
     // Calcula total de vendas e valor total
     const totalVendas = vendasFiltradas.length;
-    const valorTotal = vendasFiltradas.reduce((sum, venda) => sum + venda.valor_total, 0);
+    const valorTotal = vendasFiltradas.reduce((sum, venda) => {
+      const valor = venda.valor_total || 0;
+      return sum + valor;
+    }, 0);
+    
     const lucroTotal = vendasFiltradas.reduce((sum, venda) => {
+      if (!venda.produtos || !Array.isArray(venda.produtos)) {
+        console.warn('Venda sem produtos válidos:', venda.id);
+        return sum;
+      }
+      
       const lucroVenda = venda.produtos.reduce((lucro, produto) => {
-        console.log(lucro, produto);
         const precoCompra = produto.preco_compra || 0;
         const precoVenda = produto.preco_venda || 0;
-        return lucro + (precoVenda - precoCompra) * produto.quantidade;
+        const quantidade = produto.quantidade || 0;
+        return lucro + (precoVenda - precoCompra) * quantidade;
       }, 0);
       return sum + lucroVenda;
-    }, 0); // Novo cálculo
+    }, 0);
+    
     const mediaPorVenda = totalVendas > 0 ? valorTotal / totalVendas : 0;
 
     // Calcula produtos mais lucrativos
     const produtosMap = new Map<string, ProdutoVendido & { lucro_total: number }>();
 
     vendasFiltradas.forEach(venda => {
+      if (!venda.produtos || !Array.isArray(venda.produtos)) {
+        console.warn('Venda sem produtos válidos para mapeamento:', venda.id);
+        return;
+      }
+      
       venda.produtos.forEach(produto => {
+        if (!produto.produto_id || !produto.nome) {
+          console.warn('Produto com dados inválidos:', produto);
+          return;
+        }
+        
         const precoCompra = produto.preco_compra || 0;
         const precoVenda = produto.preco_venda || 0;
-        const lucroProduto = (precoVenda - precoCompra) * produto.quantidade;
+        const quantidade = produto.quantidade || 0;
+        const total = produto.total || 0;
+        const lucroProduto = (precoVenda - precoCompra) * quantidade;
+        
         if (produtosMap.has(produto.produto_id)) {
           const produtoExistente = produtosMap.get(produto.produto_id)!;
-          produtoExistente.quantidade_total += produto.quantidade;
-          produtoExistente.valor_total += produto.total;
+          produtoExistente.quantidade_total += quantidade;
+          produtoExistente.valor_total += total;
           produtoExistente.lucro_total += lucroProduto;
         } else {
           produtosMap.set(produto.produto_id, {
             produto_id: produto.produto_id,
             nome: produto.nome,
-            quantidade_total: produto.quantidade,
-            valor_total: produto.total,
+            quantidade_total: quantidade,
+            valor_total: total,
             lucro_total: lucroProduto,
             unidade_medida: produto.unidade_medida || ''
           });
@@ -193,16 +249,17 @@ export class RelatorioComponent implements OnInit {
     vendasFiltradas.forEach(venda => {
       const dataVenda = this.parsearData(venda.data);
       const dataFormatada = this.formatarData(dataVenda);
+      const valorVenda = venda.valor_total || 0;
 
       if (vendasPorDiaMap.has(dataFormatada)) {
         const dadosAnteriores = vendasPorDiaMap.get(dataFormatada)!;
         vendasPorDiaMap.set(dataFormatada, {
-          valor: dadosAnteriores.valor + venda.valor_total,
+          valor: dadosAnteriores.valor + valorVenda,
           quantidade: dadosAnteriores.quantidade + 1
         });
       } else {
         vendasPorDiaMap.set(dataFormatada, {
-          valor: venda.valor_total,
+          valor: valorVenda,
           quantidade: 1
         });
       }
@@ -217,17 +274,22 @@ export class RelatorioComponent implements OnInit {
     const clientesMap = new Map<string, ClienteInfo>();
     
     vendasFiltradas.forEach(venda => {
-      if (!venda.cliente) return; // Ignora vendas sem cliente
+      if (!venda.cliente || venda.cliente.trim() === '') {
+        console.warn('Venda sem cliente:', venda.id);
+        return; // Ignora vendas sem cliente
+      } 
+      
+      const valorVenda = venda.valor_total || 0;
       
       if (clientesMap.has(venda.cliente)) {
         const clienteInfo = clientesMap.get(venda.cliente)!;
         clienteInfo.quantidade_compras += 1;
-        clienteInfo.valor_total += venda.valor_total;
+        clienteInfo.valor_total += valorVenda;
       } else {
         clientesMap.set(venda.cliente, {
           nome: venda.cliente,
           quantidade_compras: 1,
-          valor_total: venda.valor_total
+          valor_total: valorVenda
         });
       }
     });
@@ -241,16 +303,17 @@ export class RelatorioComponent implements OnInit {
     vendasFiltradas.forEach(venda => {
       const dataVenda = this.parsearData(venda.data);
       const mesAno = `${dataVenda.getFullYear()}-${String(dataVenda.getMonth() + 1).padStart(2, '0')}`;
+      const valorVenda = venda.valor_total || 0;
       
       if (analiseMensalMap.has(mesAno)) {
         const dadosAnteriores = analiseMensalMap.get(mesAno)!;
         analiseMensalMap.set(mesAno, {
-          valor: dadosAnteriores.valor + venda.valor_total,
+          valor: dadosAnteriores.valor + valorVenda,
           quantidade: dadosAnteriores.quantidade + 1
         });
       } else {
         analiseMensalMap.set(mesAno, {
-          valor: venda.valor_total,
+          valor: valorVenda,
           quantidade: 1
         });
       }
@@ -260,7 +323,7 @@ export class RelatorioComponent implements OnInit {
       .map(([mes, dados]) => ({ mes, valor: dados.valor, quantidade: dados.quantidade }))
       .sort((a, b) => a.mes.localeCompare(b.mes));
     
-    return {
+    const resultado = {
       total_vendas: totalVendas,
       valor_total: valorTotal,
       lucro_total: lucroTotal,
@@ -269,9 +332,12 @@ export class RelatorioComponent implements OnInit {
         .sort((a, b) => b.quantidade_total - a.quantidade_total),
       produtos_mais_lucrativos: produtosMaisLucrativos,
       vendas_por_dia: vendasPorDia,
-      clientes_mais_frequentes: [],
-      analise_mensal: []
+      clientes_mais_frequentes: clientesMaisFrequentes,
+      analise_mensal: analisesMensal
     };
+    
+    console.log('Estatísticas calculadas:', resultado);
+    return resultado;
   }
 
   gerarRelatorio(): void {
@@ -284,9 +350,12 @@ export class RelatorioComponent implements OnInit {
     
     this.vendaService.listarVendas().subscribe({
       next: (vendas) => {
+        console.log('Vendas carregadas:', vendas.length);
         this.vendas = vendas;
         const vendasFiltradas = this.filtrarVendasPorPeriodo();
+        console.log('Vendas filtradas:', vendasFiltradas.length);
         this.resumo = this.gerarEstatisticas(vendasFiltradas);
+        console.log('Resumo gerado:', this.resumo);
         this.loaderService.closeLoading();
       },
       error: (err) => {

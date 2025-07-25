@@ -18,11 +18,7 @@ import { LoaderComponent } from './shared/loader/loader.component';
 import { ConfirmModalComponent } from './shared/confirm-modal/confirm-modal.component';
 import { UnidadeMedidaComponent } from './pages/unidade-medida/unidade-medida.component';
 
-import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
-import { provideFirestore, getFirestore } from '@angular/fire/firestore';
-import { provideAuth, getAuth } from '@angular/fire/auth';
-import { getStorage, provideStorage } from '@angular/fire/storage';
-import { environment } from '../environments/environment';
+import { FirebaseModule } from './firebase/firebase.module';
 import { CurrencyPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { VendaComponent } from './pages/venda/venda.component';
@@ -63,12 +59,11 @@ registerLocaleData(localePt);
     FontAwesomeModule,
     CurrencyPipe,
     RelatorioModule,
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
-    provideFirestore(() => getFirestore()),
-    provideAuth(() => getAuth()),
-    provideStorage(() => getStorage()), 
+    FirebaseModule
   ],
-  providers: [ {provide: LOCALE_ID, useValue: 'pt-BR'} ],
+  providers: [ 
+    {provide: LOCALE_ID, useValue: 'pt-BR'}
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

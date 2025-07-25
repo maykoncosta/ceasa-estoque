@@ -1,15 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ProdutoService, Produto } from 'src/app/core/services/produto.service';
 import { VendaService, Venda } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
+import { EmpresaService } from 'src/app/core/services/empresa.service';
+import { Empresa } from 'src/app/shared/models/empresa.model';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   
   vendasHoje: number = 0;
   valorTotalHoje: number = 0;
@@ -17,6 +22,7 @@ export class DashboardComponent implements OnInit {
   clientesMaisFrequentes: any[] = [];
   produtosMaisVendidos: any[] = [];
   vendasSemanais: Venda[] = [];
+  empresa: Empresa | null = null;
   
   // Para o gráfico
   dadosGrafico: any = {
@@ -33,11 +39,40 @@ export class DashboardComponent implements OnInit {
     private router: Router,
     private produtoService: ProdutoService,
     private vendaService: VendaService,
-    private loaderService: LoaderService
+    private loaderService: LoaderService,
+    private empresaService: EmpresaService
   ) {}
 
   ngOnInit(): void {
+    this.carregarEmpresa();
+    this.inicializarEmpresa();
     this.carregarDados();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private carregarEmpresa(): void {
+    this.empresaService.obterEmpresa().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (empresa) => {
+        this.empresa = empresa;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar empresa no dashboard:', error);
+      }
+    });
+  }
+
+  async inicializarEmpresa(): Promise<void> {
+    try {
+      await this.empresaService.inicializarEmpresaSeNecessario();
+    } catch (error) {
+      console.error('Erro ao inicializar empresa:', error);
+    }
   }
   
   carregarDados() {

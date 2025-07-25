@@ -11,6 +11,7 @@ import { VendaFormComponent } from './pages/venda/venda-form/venda-form.componen
 import { ClienteComponent } from './pages/cliente/cliente.component';
 import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-vendas.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
+import { ContaComponent } from './pages/conta/conta.component';
 
 const routes: Routes = [
   {path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard]},
@@ -22,6 +23,7 @@ const routes: Routes = [
   {path: 'vendas/nova', component: VendaFormComponent, canActivate: [AuthGuard]},
   {path: 'vendas/editar/:id', component: VendaFormComponent, canActivate: [AuthGuard]},
   {path: 'relatorios', component: RelatorioComponent, canActivate: [AuthGuard]},
+  {path: 'conta', component: ContaComponent, canActivate: [AuthGuard]},
   {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
   {path: '', component: DashboardComponent, canActivate: [AuthGuard]},
   {path: '**', redirectTo: '', canActivate: [AuthGuard]}

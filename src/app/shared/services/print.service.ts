@@ -2,13 +2,21 @@ import { Injectable } from '@angular/core';
 import * as jsPDF from 'jspdf';
 import { Venda } from 'src/app/core/services/venda.service';
 import { Produto } from 'src/app/core/services/produto.service';
+import { EmpresaService } from 'src/app/core/services/empresa.service';
+import { Empresa } from 'src/app/shared/models/empresa.model';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PrintService {
+    private empresa: Empresa | null = null;
 
-    constructor() { }
+    constructor(private empresaService: EmpresaService) {
+        // Carregar dados da empresa
+        this.empresaService.obterEmpresa().subscribe(empresa => {
+            this.empresa = empresa;
+        });
+    }
 
     /**
      * Gera um PDF de cupom não fiscal da venda para download
@@ -195,9 +203,42 @@ export class PrintService {
             pdf.text(texto, x, alturaAtual);
         };
 
-        // --- CABEÇALHO ---
+        // --- CABEÇALHO DA EMPRESA ---
         pdf.setFont('helvetica', 'bold');
-        adicionarLinha('R e K FRUTAS', 'center', 12);
+        const nomeEmpresa = this.empresa?.nome || 'Balcão Rápido';
+        adicionarLinha(nomeEmpresa, 'center', 12);
+        
+        // Razão social (se diferente do nome)
+        if (this.empresa?.razao_social && this.empresa.razao_social !== this.empresa.nome) {
+            pdf.setFont('helvetica', 'normal');
+            adicionarLinha(this.empresa.razao_social, 'center', 8);
+        }
+        
+        // CNPJ (se disponível)
+        if (this.empresa?.cnpj) {
+            pdf.setFont('helvetica', 'normal');
+            adicionarLinha(`CNPJ: ${this.empresa.cnpj}`, 'center', 8);
+        }
+        
+        // Contato da empresa (só telefone/celular no cabeçalho)
+        if (this.empresa?.contato) {
+            const contato = this.empresa.contato;
+            let contatoInfo = '';
+            
+            if (contato.telefone) {
+                contatoInfo += `Tel: ${contato.telefone}`;
+            }
+            
+            if (contato.celular) {
+                if (contatoInfo) contatoInfo += ' | ';
+                contatoInfo += `Cel: ${contato.celular}`;
+            }
+            
+            if (contatoInfo) {
+                adicionarLinha(contatoInfo, 'center', 7);
+            }
+        }
+        
         pdf.setFont('helvetica', 'normal');
         adicionarLinha('LISTA DE PRODUTOS', 'center', 10);
 
@@ -254,6 +295,44 @@ export class PrintService {
         pdf.setFont('helvetica', 'normal');
         adicionarLinha(`Total: ${produtos.length} produtos`, 'center', 9);
         
+        // --- RODAPÉ COM ENDEREÇO ---
+        if (this.empresa?.endereco) {
+            const endereco = this.empresa.endereco;
+            
+            // Linha 1: Rua e número
+            if (endereco.rua && endereco.numero) {
+                let linha1 = `${endereco.rua}, ${endereco.numero}`;
+                if (endereco.complemento) {
+                    linha1 += `, ${endereco.complemento}`;
+                }
+                alturaAtual += 1;
+                adicionarLinha(linha1, 'center', 7);
+            }
+            
+            // Linha 2: Bairro
+            if (endereco.bairro) {
+                alturaAtual += 0.5;
+                adicionarLinha(endereco.bairro, 'center', 7);
+            }
+            
+            // Linha 3: Cidade/Estado - CEP
+            let linha3 = '';
+            if (endereco.cidade && endereco.estado) {
+                linha3 = `${endereco.cidade}/${endereco.estado}`;
+            }
+            if (endereco.cep) {
+                if (linha3) {
+                    linha3 += ` - CEP: ${endereco.cep}`;
+                } else {
+                    linha3 = `CEP: ${endereco.cep}`;
+                }
+            }
+            if (linha3) {
+                alturaAtual += 0.5;
+                adicionarLinha(linha3, 'center', 7);
+            }
+        }
+        
         alturaAtual += 2;
         pdf.setFont('helvetica', 'bold');
         adicionarLinha('Sistema CEASA Estoque', 'center', 8);
@@ -303,9 +382,42 @@ export class PrintService {
             pdf.text(texto, x, alturaAtual);
         };
 
-        // --- CABEÇALHO ---
+        // --- CABEÇALHO DA EMPRESA ---
         pdf.setFont('helvetica', 'bold');
-        adicionarLinha('R e K FRUTAS', 'center', 12);
+        const nomeEmpresa = this.empresa?.nome || 'Balcão Rápido';
+        adicionarLinha(nomeEmpresa, 'center', 12);
+        
+        // Razão social (se diferente do nome)
+        if (this.empresa?.razao_social && this.empresa.razao_social !== this.empresa.nome) {
+            pdf.setFont('helvetica', 'normal');
+            adicionarLinha(this.empresa.razao_social, 'center', 8);
+        }
+        
+        // CNPJ (se disponível)
+        if (this.empresa?.cnpj) {
+            pdf.setFont('helvetica', 'normal');
+            adicionarLinha(`CNPJ: ${this.empresa.cnpj}`, 'center', 8);
+        }
+        
+        // Contato da empresa (só telefone/celular no cabeçalho)
+        if (this.empresa?.contato) {
+            const contato = this.empresa.contato;
+            let contatoInfo = '';
+            
+            if (contato.telefone) {
+                contatoInfo += `Tel: ${contato.telefone}`;
+            }
+            
+            if (contato.celular) {
+                if (contatoInfo) contatoInfo += ' | ';
+                contatoInfo += `Cel: ${contato.celular}`;
+            }
+            
+            if (contatoInfo) {
+                adicionarLinha(contatoInfo, 'center', 7);
+            }
+        }
+        
         pdf.setFont('helvetica', 'normal');
         adicionarLinha('CUPOM NÃO FISCAL', 'center', 10);
 
@@ -385,6 +497,47 @@ export class PrintService {
 
         const dataHoraImpressao = agora.toLocaleString('pt-BR');
         adicionarLinha(`Impresso: ${dataHoraImpressao}`, 'left', 7);
+
+        // --- RODAPÉ COM ENDEREÇO ---
+        if (this.empresa?.endereco) {
+            const endereco = this.empresa.endereco;
+            
+            // Linha 1: Rua e número
+            if (endereco.rua && endereco.numero) {
+                let linha1 = `${endereco.rua}, ${endereco.numero}`;
+                if (endereco.complemento) {
+                    linha1 += `, ${endereco.complemento}`;
+                }
+                alturaAtual += 1;
+                pdf.setFont('helvetica', 'normal');
+                adicionarLinha(linha1, 'center', 7);
+            }
+            
+            // Linha 2: Bairro
+            if (endereco.bairro) {
+                alturaAtual += 0.5;
+                pdf.setFont('helvetica', 'normal');
+                adicionarLinha(endereco.bairro, 'center', 7);
+            }
+            
+            // Linha 3: Cidade/Estado - CEP
+            let linha3 = '';
+            if (endereco.cidade && endereco.estado) {
+                linha3 = `${endereco.cidade}/${endereco.estado}`;
+            }
+            if (endereco.cep) {
+                if (linha3) {
+                    linha3 += ` - CEP: ${endereco.cep}`;
+                } else {
+                    linha3 = `CEP: ${endereco.cep}`;
+                }
+            }
+            if (linha3) {
+                alturaAtual += 0.5;
+                pdf.setFont('helvetica', 'normal');
+                adicionarLinha(linha3, 'center', 7);
+            }
+        }
 
         alturaAtual += 2;
         pdf.setFont('helvetica', 'bold');

@@ -8,7 +8,28 @@
             <i class="fa-solid fa-bars w-8"></i>
         </button>
         <h2 *ngIf="!(user$ | async)"></h2>
-        <h1 class="text-lg font-bold"> Balcão Rápido</h1>
+        
+        <!-- Informações da Empresa -->
+        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
+             (click)="navegarParaDashboard()">
+          <!-- Logo da empresa (se disponível) -->
+          <img 
+            *ngIf="logoEmpresa" 
+            [src]="logoEmpresa" 
+            [alt]="nomeEmpresa"
+            class="w-8 h-8 rounded-full object-cover border border-white/20">
+          
+          <!-- Nome da empresa -->
+          <div class="flex flex-col">
+            <h1 class="text-lg font-bold">{{ nomeEmpresa }}</h1>
+            <!-- Status da empresa (apenas se inativa) -->
+            <span 
+              *ngIf="!empresaAtiva" 
+              class="text-xs text-red-200 font-medium">
+              Conta Inativa
+            </span>
+          </div>
+        </div>
 
         <button class="background" *ngIf="user$ | async" (click)="logout()" class="p-2 md:min-w-16 ">
             <i class="fa-solid fa-right-from-bracket w-8"></i>

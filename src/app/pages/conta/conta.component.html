@@ -1,1 +1,487 @@
-<p>conta works!</p>
+<div class="conta-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-building"></i>
+      Configurações da Conta
+    </h1>
+    <p>Gerencie as informações da sua empresa e personalize o sistema</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando dados da empresa...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="cards-grid">
+    
+    <!-- Card 1: Dados da Empresa -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-building"></i>
+          Dados da Empresa
+        </h3>
+        <div class="status-badge" [class.active]="empresaForm.get('ativo')?.value">
+          {{ empresaForm.get('ativo')?.value ? 'Ativa' : 'Inativa' }}
+        </div>
+      </div>
+      
+      <form [formGroup]="empresaForm" class="card-content">
+        <div class="form-group">
+          <label for="nome">Nome da Empresa *</label>
+          <input 
+            type="text" 
+            id="nome"
+            formControlName="nome"
+            class="form-control"
+            [class.error]="empresaForm.get('nome')?.invalid && empresaForm.get('nome')?.touched">
+          <small *ngIf="empresaForm.get('nome')?.invalid && empresaForm.get('nome')?.touched" class="error-text">
+            Nome é obrigatório (mínimo 3 caracteres)
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="razao_social">Razão Social *</label>
+          <input 
+            type="text" 
+            id="razao_social"
+            formControlName="razao_social"
+            class="form-control"
+            [class.error]="empresaForm.get('razao_social')?.invalid && empresaForm.get('razao_social')?.touched">
+          <small *ngIf="empresaForm.get('razao_social')?.invalid && empresaForm.get('razao_social')?.touched" class="error-text">
+            Razão social é obrigatória (mínimo 3 caracteres)
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="cnpj">CNPJ (opcional)</label>
+          <input 
+            type="text" 
+            id="cnpj"
+            formControlName="cnpj"
+            class="form-control"
+            placeholder="00.000.000/0000-00"
+            (input)="formatarCNPJ($event)">
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="ativo">
+            <span class="checkmark"></span>
+            Conta ativa
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="empresaForm.invalid || salvando"
+            (click)="saveEmpresaData()">
+            <i class="fas fa-save"></i>
+            {{ salvando ? 'Salvando...' : 'Salvar Dados' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            [disabled]="salvando"
+            (click)="confirmClearForm('empresa')">
+            <i class="fas fa-eraser"></i>
+            Limpar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Card 2: Endereço -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-map-marker-alt"></i>
+          Endereço
+        </h3>
+        <div *ngIf="buscandoCep" class="small-spinner"></div>
+      </div>
+      
+      <form [formGroup]="enderecoForm" class="card-content">
+        <div class="form-row">
+          <div class="form-group col-4">
+            <label for="cep">CEP *</label>
+            <input 
+              type="text" 
+              id="cep"
+              formControlName="cep"
+              class="form-control"
+              placeholder="00000-000"
+              (input)="formatarCEP($event)"
+              [class.error]="enderecoForm.get('cep')?.invalid && enderecoForm.get('cep')?.touched">
+          </div>
+          <div class="form-group col-8">
+            <label for="rua">Rua/Avenida *</label>
+            <input 
+              type="text" 
+              id="rua"
+              formControlName="rua"
+              class="form-control"
+              [class.error]="enderecoForm.get('rua')?.invalid && enderecoForm.get('rua')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-4">
+            <label for="numero">Número *</label>
+            <input 
+              type="text" 
+              id="numero"
+              formControlName="numero"
+              class="form-control"
+              [class.error]="enderecoForm.get('numero')?.invalid && enderecoForm.get('numero')?.touched">
+          </div>
+          <div class="form-group col-8">
+            <label for="complemento">Complemento</label>
+            <input 
+              type="text" 
+              id="complemento"
+              formControlName="complemento"
+              class="form-control"
+              placeholder="Apto, sala, etc.">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bairro">Bairro *</label>
+          <input 
+            type="text" 
+            id="bairro"
+            formControlName="bairro"
+            class="form-control"
+            [class.error]="enderecoForm.get('bairro')?.invalid && enderecoForm.get('bairro')?.touched">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-8">
+            <label for="cidade">Cidade *</label>
+            <input 
+              type="text" 
+              id="cidade"
+              formControlName="cidade"
+              class="form-control"
+              [class.error]="enderecoForm.get('cidade')?.invalid && enderecoForm.get('cidade')?.touched">
+          </div>
+          <div class="form-group col-4">
+            <label for="estado">Estado *</label>
+            <select 
+              id="estado"
+              formControlName="estado"
+              class="form-control"
+              [class.error]="enderecoForm.get('estado')?.invalid && enderecoForm.get('estado')?.touched">
+              <option value="">Selecione</option>
+              <option *ngFor="let estado of estadosBrasil" [value]="estado.sigla">
+                {{ estado.sigla }} - {{ estado.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="enderecoForm.invalid || salvando"
+            (click)="saveEnderecoData()">
+            <i class="fas fa-save"></i>
+            {{ salvando ? 'Salvando...' : 'Salvar Endereço' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            [disabled]="salvando"
+            (click)="confirmClearForm('endereco')">
+            <i class="fas fa-eraser"></i>
+            Limpar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Card 3: Contato -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-phone"></i>
+          Informações de Contato
+        </h3>
+      </div>
+      
+      <form [formGroup]="contatoForm" class="card-content">
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label for="telefone">Telefone</label>
+            <input 
+              type="tel" 
+              id="telefone"
+              formControlName="telefone"
+              class="form-control"
+              placeholder="(00) 0000-0000">
+          </div>
+          <div class="form-group col-6">
+            <label for="celular">Celular</label>
+            <input 
+              type="tel" 
+              id="celular"
+              formControlName="celular"
+              class="form-control"
+              placeholder="(00) 00000-0000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input 
+            type="email" 
+            id="email"
+            formControlName="email"
+            class="form-control"
+            [class.error]="contatoForm.get('email')?.invalid && contatoForm.get('email')?.touched">
+          <small *ngIf="contatoForm.get('email')?.invalid && contatoForm.get('email')?.touched" class="error-text">
+            Email válido é obrigatório
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="site">Website</label>
+          <input 
+            type="url" 
+            id="site"
+            formControlName="site"
+            class="form-control"
+            placeholder="https://meusite.com.br">
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="contatoForm.invalid || salvando"
+            (click)="saveContatoData()">
+            <i class="fas fa-save"></i>
+            {{ salvando ? 'Salvando...' : 'Salvar Contato' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            [disabled]="salvando"
+            (click)="confirmClearForm('contato')">
+            <i class="fas fa-eraser"></i>
+            Limpar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Card 4: Logo da Empresa -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-image"></i>
+          Logo da Empresa
+        </h3>
+      </div>
+      
+      <div class="card-content">
+        <app-upload-logo
+          [logoUrl]="logoUrl"
+          [uploading]="uploadingLogo"
+          (fileSelected)="onLogoSelected($event)"
+          (removeLogo)="onRemoveLogo()">
+        </app-upload-logo>
+      </div>
+    </div>
+
+    <!-- Card 5: Configurações -->
+    <!-- TEMPORARIAMENTE DESABILITADO
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-cog"></i>
+          Configurações do Sistema
+        </h3>
+      </div>
+      
+      <form [formGroup]="configForm" class="card-content">
+        <div class="form-group">
+          <label>Cores do Sistema</label>
+          <div class="color-section">
+            <div class="color-group">
+              <label for="cor_primaria">Cor Primária</label>
+              <div class="color-picker-container">
+                <input 
+                  type="color" 
+                  id="cor_primaria"
+                  formControlName="cor_primaria"
+                  class="color-picker">
+                <div class="color-presets">
+                  <button 
+                    *ngFor="let cor of coresPredefinidas"
+                    type="button"
+                    class="color-preset"
+                    [style.background-color]="cor"
+                    (click)="selecionarCor(cor, 'primaria')">
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="color-group">
+              <label for="cor_secundaria">Cor Secundária</label>
+              <div class="color-picker-container">
+                <input 
+                  type="color" 
+                  id="cor_secundaria"
+                  formControlName="cor_secundaria"
+                  class="color-picker">
+                <div class="color-presets">
+                  <button 
+                    *ngFor="let cor of coresPredefinidas"
+                    type="button"
+                    class="color-preset"
+                    [style.background-color]="cor"
+                    (click)="selecionarCor(cor, 'secundaria')">
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label for="formato_data">Formato de Data</label>
+            <select id="formato_data" formControlName="formato_data" class="form-control">
+              <option value="DD/MM/YYYY">DD/MM/YYYY (Brasileiro)</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY (Americano)</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label for="moeda">Moeda</label>
+            <select id="moeda" formControlName="moeda" class="form-control">
+              <option value="BRL">Real (R$)</option>
+              <option value="USD">Dólar ($)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="mostrar_logo_cupom">
+            <span class="checkmark"></span>
+            Mostrar logo nos cupons impressos
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            [disabled]="configForm.invalid || salvando"
+            (click)="saveConfigData()">
+            <i class="fas fa-save"></i>
+            {{ salvando ? 'Salvando...' : 'Salvar Configurações' }}
+          </button>
+        </div>
+      </form>
+    </div>
+    -->
+
+    <!-- Card 6: Estatísticas -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-chart-bar"></i>
+          Estatísticas da Conta
+        </h3>
+      </div>
+      
+      <div class="card-content">
+        <div *ngIf="estatisticas" class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-icon produtos">
+              <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ estatisticas.total_produtos }}</span>
+              <span class="stat-label">Produtos</span>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon clientes">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ estatisticas.total_clientes }}</span>
+              <span class="stat-label">Clientes</span>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon vendas">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ estatisticas.total_vendas }}</span>
+              <span class="stat-label">Vendas</span>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon faturamento">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ estatisticas.valor_total_vendas | currency:'BRL':'symbol':'1.2-2' }}</span>
+              <span class="stat-label">Faturamento</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="estatisticas && empresa" class="account-info">
+          <div class="info-row">
+            <span class="info-label">Conta criada em:</span>
+            <span class="info-value">{{ empresa.criado_em | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Última atualização:</span>
+            <span class="info-value">{{ empresa.atualizado_em | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div *ngIf="estatisticas.data_primeira_venda" class="info-row">
+            <span class="info-label">Primeira venda:</span>
+            <span class="info-value">{{ estatisticas.data_primeira_venda | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Saving Indicator -->
+  <div *ngIf="salvando" class="saving-indicator">
+    <div class="small-spinner"></div>
+    <span>Salvando...</span>
+  </div>
+
+  <!-- Modal de Confirmação -->
+  <app-confirm-modal
+    [show]="showConfirmModal"
+    [title]="confirmModalConfig.title"
+    [message]="confirmModalConfig.message"
+    [confirmText]="confirmModalConfig.confirmText"
+    [cancelText]="confirmModalConfig.cancelText"
+    (confirm)="onConfirmModalConfirm()"
+    (cancel)="onConfirmModalCancel()">
+  </app-confirm-modal>
+</div>

@@ -28,6 +28,7 @@ import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { RelatorioModule } from './pages/relatorio/relatorio.module';
 import { ContaComponent } from './pages/conta/conta.component';
 import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-vendas.component';
+import { UploadLogoComponent } from './pages/conta/upload-logo/upload-logo.component';
 
 registerLocaleData(localePt);
 
@@ -48,6 +49,7 @@ registerLocaleData(localePt);
     VendaFormComponent,
     ContaComponent,
     ClienteVendasComponent,
+    UploadLogoComponent,
   ],
   imports: [
     BrowserModule,

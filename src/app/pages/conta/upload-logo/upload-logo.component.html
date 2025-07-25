@@ -1,0 +1,52 @@
+<div class="upload-logo-container">
+  <!-- Preview da Logo Atual -->
+  <div *ngIf="logoUrl && !uploading" class="logo-preview">
+    <img [src]="logoUrl" alt="Logo da empresa" class="logo-image">
+    <button 
+      type="button" 
+      class="remove-logo-btn"
+      (click)="onRemoveLogo()"
+      title="Remover logo">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Área de Upload -->
+  <div 
+    class="upload-area"
+    [class.drag-over]="dragOver"
+    [class.has-logo]="logoUrl"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+    
+    <!-- Loading Spinner -->
+    <div *ngIf="uploading" class="upload-loading">
+      <div class="spinner"></div>
+      <span>Enviando logo...</span>
+    </div>
+
+    <!-- Upload Content -->
+    <div *ngIf="!uploading" class="upload-content">
+      <i class="fas fa-cloud-upload-alt upload-icon"></i>
+      <h4>{{ logoUrl ? 'Alterar Logo' : 'Adicionar Logo' }}</h4>
+      <p>Arraste uma imagem aqui ou clique para selecionar</p>
+      <small>JPG, PNG ou SVG • Máximo 2MB</small>
+      
+      <input 
+        type="file" 
+        #fileInput
+        class="file-input"
+        accept="image/*"
+        (change)="onFileSelected($event)">
+      
+      <button 
+        type="button" 
+        class="upload-btn"
+        (click)="fileInput.click()">
+        <i class="fas fa-upload"></i>
+        Selecionar Arquivo
+      </button>
+    </div>
+  </div>
+</div>

@@ -397,4 +397,29 @@ export class EmpresaService {
       }
     }
   }
+
+  /**
+   * Sincroniza o email da empresa com o email de autenticação
+   * ATENÇÃO: Isso NÃO altera o email de login, apenas o email comercial da empresa
+   */
+  async sincronizarEmailComAuth(): Promise<void> {
+    const user = this.authService.getCurrentUser();
+    if (!user?.email) {
+      throw new Error('Usuário não está logado ou não tem email');
+    }
+
+    await this.atualizarEmpresa({
+      contato: {
+        email: user.email
+      }
+    });
+  }
+
+  /**
+   * Obtém o email de autenticação atual (para comparação)
+   */
+  getEmailAuth(): string | null {
+    const user = this.authService.getCurrentUser();
+    return user?.email || null;
+  }
 }

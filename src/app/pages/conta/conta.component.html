@@ -240,25 +240,28 @@
 
         <div class="form-group">
           <label for="email">Email *</label>
-          <input 
-            type="email" 
-            id="email"
-            formControlName="email"
-            class="form-control"
-            [class.error]="contatoForm.get('email')?.invalid && contatoForm.get('email')?.touched">
+          <div class="email-input-group">
+            <input 
+              type="email" 
+              id="email"
+              formControlName="email"
+              class="form-control"
+              [class.error]="contatoForm.get('email')?.invalid && contatoForm.get('email')?.touched">
+            <button 
+              type="button" 
+              class="btn-sync-email"
+              title="Sincronizar com email de login"
+              (click)="sincronizarEmailAuth()">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
           <small *ngIf="contatoForm.get('email')?.invalid && contatoForm.get('email')?.touched" class="error-text">
             Email válido é obrigatório
           </small>
-        </div>
-
-        <div class="form-group">
-          <label for="site">Website</label>
-          <input 
-            type="url" 
-            id="site"
-            formControlName="site"
-            class="form-control"
-            placeholder="https://meusite.com.br">
+          <small class="info-text">
+            <i class="fas fa-info-circle"></i>
+            Este email é usado para contato. Para alterar o email de login, acesse as configurações da conta.
+          </small>
         </div>
 
         <div class="form-actions">

@@ -184,6 +184,55 @@
   transform: none;
 }
 
+/* Email input group */
+.email-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.email-input-group .form-control {
+  flex: 1;
+}
+
+.btn-sync-email {
+  padding: 0.75rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sync-email:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.btn-sync-email:active {
+  transform: translateY(0);
+}
+
+.info-text {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.info-text i {
+  margin-right: 0.25rem;
+  color: #3b82f6;
+}
+
 .form-row {
   display: flex;
   gap: 1rem;

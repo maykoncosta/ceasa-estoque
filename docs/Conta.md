@@ -22,7 +22,6 @@ O component de conta é responsável por gerenciar todas as informações da emp
 - Telefone fixo (opcional)
 - Celular (opcional)
 - Email (obrigatório, com validação)
-- Website (opcional)
 
 ### 4. **Logo da Empresa**
 - Upload de imagem (JPG, PNG, SVG)
@@ -92,7 +91,7 @@ interface Empresa {
    - Mapa opcional (futura implementação)
 
 3. **Card "Contato"**
-   - Campos de telefone, email e website
+   - Campos de telefone e email
    - Validação de formato de email
    - Links clicáveis para contato
 

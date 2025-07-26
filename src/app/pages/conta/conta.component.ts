@@ -424,6 +424,28 @@ export class ContaComponent implements OnInit, OnDestroy {
     this.messageService.success('Contato limpo');
   }
 
+  // Método para sincronizar email da empresa com email de autenticação
+  async sincronizarEmailAuth(): Promise<void> {
+    try {
+      const emailAuth = this.empresaService.getEmailAuth();
+      
+      if (!emailAuth) {
+        this.messageService.error('Email de autenticação não encontrado');
+        return;
+      }
+
+      // Atualizar o formulário
+      this.contatoForm.patchValue({ email: emailAuth });
+      
+      // Informar ao usuário
+      this.messageService.success(`Email sincronizado: ${emailAuth}`);
+      
+    } catch (error) {
+      console.error('Erro ao sincronizar email:', error);
+      this.messageService.error('Erro ao sincronizar email');
+    }
+  }
+
   formatarCNPJ(event: any): void {
     const value = event.target.value.replace(/\D/g, '');
     if (value.length <= 14) {

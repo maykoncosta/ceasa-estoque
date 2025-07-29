@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
-import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData, deleteField } from '@angular/fire/firestore';
 import { Observable, of, from, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
 
@@ -22,6 +22,7 @@ export interface Venda{
   data: any;
   cliente: string;
   valor_pago?: number;
+  observacao?: string | null;
   expandido?: boolean
 }
 
@@ -54,6 +55,7 @@ export class VendaService {
               data: data['data'],
               cliente: data['cliente'],
               valor_pago: data['valor_pago'],
+              observacao: data['observacao'],
               expandido: false
             });
           });
@@ -82,6 +84,13 @@ export class VendaService {
       empresa_id: user.uid
     };
 
+    // Remover apenas campos undefined (manter null para limpar campos)
+    Object.keys(vendaToSave).forEach(key => {
+      if (vendaToSave[key as keyof Venda] === undefined) {
+        delete vendaToSave[key as keyof Venda];
+      }
+    });
+
     return addDoc(collection(this.firestore, 'vendas'), vendaToSave);
   }
 
@@ -91,6 +100,18 @@ export class VendaService {
     if (vendaToUpdate.cliente) {
       vendaToUpdate.cliente = vendaToUpdate.cliente.toLocaleUpperCase();
     }
+
+    // Tratar observação null para remover o campo
+    if (vendaToUpdate.observacao === null) {
+      vendaToUpdate.observacao = deleteField() as any;
+    }
+
+    // Remover apenas campos undefined
+    Object.keys(vendaToUpdate).forEach(key => {
+      if (vendaToUpdate[key as keyof Venda] === undefined) {
+        delete vendaToUpdate[key as keyof Venda];
+      }
+    });
 
     const vendaDoc = doc(this.firestore, 'vendas', id);
     return await updateDoc(vendaDoc, vendaToUpdate);
@@ -208,6 +229,7 @@ export class VendaService {
         lucro_total: data['lucro_total'],
         data: data['data'],
         cliente: data['cliente'],
+        observacao: data['observacao'],
         expandido: false
       });
       lastVisible = doc;
@@ -268,6 +290,7 @@ export class VendaService {
         data: data['data'],
         cliente: data['cliente'],
         valor_pago: data['valor_pago'] || 0,
+        observacao: data['observacao'],
         expandido: false
       });
       lastVisible = doc;

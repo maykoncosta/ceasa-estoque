@@ -65,6 +65,7 @@ export class VendaFormComponent implements OnInit {
     this.form = new UntypedFormGroup({
       cliente: new UntypedFormControl('', Validators.compose([Validators.required])),
       data: new UntypedFormControl(this.getToday(), Validators.required),
+      observacao: new UntypedFormControl(''), // Campo opcional
     }); this.formProdutos = new UntypedFormGroup({
       produto: new UntypedFormControl(''),
       quantidade: new UntypedFormControl('', [Validators.required, Validators.min(0.01)]),
@@ -136,7 +137,8 @@ export class VendaFormComponent implements OnInit {
 
           this.form.patchValue({
             cliente: venda.cliente,
-            data: dataFormatada
+            data: dataFormatada,
+            observacao: venda.observacao || ''
           });
 
           // Definir cliente selecionado para o autocomplete
@@ -373,12 +375,15 @@ export class VendaFormComponent implements OnInit {
     const [year, month, day] = data.split('-');
     const dataVenda = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
 
+    const observacao = this.form.get('observacao')?.value;
+    
     const venda: Venda = {
       produtos: this.produtosVenda,
       data: dataVenda,
       cliente: cliente,
       valor_total: this.calcularTotal(),
-      lucro_total: this.calcularLucroTotal()
+      lucro_total: this.calcularLucroTotal(),
+      observacao: observacao && observacao.trim() !== '' ? observacao.trim() : null
     } as Venda;
 
     // Debug: verificar se há campos undefined

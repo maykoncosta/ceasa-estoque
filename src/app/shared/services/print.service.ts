@@ -356,7 +356,16 @@ export class PrintService {
         const linhasCabecalho = 8;
         const linhasProdutos = venda.produtos.length * 2; // 2 linhas por produto
         const linhasRodape = 8;
-        const alturaTotal = (linhasCabecalho + linhasProdutos + linhasRodape) * alturaLinha;
+        
+        // Calcular linhas adicionais para observação
+        let linhasObservacao = 0;
+        if (venda.observacao && venda.observacao.trim() !== '') {
+            // Estimativa aproximada de linhas necessárias para a observação
+            const caracteresAproxPorLinha = 45;
+            linhasObservacao = Math.ceil(venda.observacao.length / caracteresAproxPorLinha) + 2; // +2 para título e espaçamento
+        }
+        
+        const alturaTotal = (linhasCabecalho + linhasProdutos + linhasRodape + linhasObservacao) * alturaLinha;
 
         // Criar PDF com tamanho customizado
         const pdf = new jsPDF.jsPDF({
@@ -486,6 +495,25 @@ export class PrintService {
         const totalTexto = `TOTAL: R$ ${venda.valor_total.toFixed(2)}`;
         adicionarLinha(totalTexto, 'center', 12);
 
+        // --- OBSERVAÇÃO ---
+        if (venda.observacao && venda.observacao.trim() !== '') {
+            alturaAtual += 3;
+            pdf.setLineWidth(0.2);
+            pdf.line(margem, alturaAtual, larguraCupom - margem, alturaAtual);
+            alturaAtual += 2;
+            
+            pdf.setFont('helvetica', 'bold');
+            adicionarLinha('OBSERVAÇÃO:', 'left', 8);
+            
+            pdf.setFont('helvetica', 'normal');
+            // Quebrar a observação em linhas se for muito longa
+            const maxWidth = larguraCupom - (margem * 2);
+            const observacaoLinhas = this.quebrarTextoEmLinhas(venda.observacao, maxWidth, pdf, 8);
+            observacaoLinhas.forEach((linha: string) => {
+                adicionarLinha(linha, 'left', 8);
+            });
+        }
+
         // --- RODAPÉ ---
         alturaAtual += 3;
         pdf.line(margem, alturaAtual, larguraCupom - margem, alturaAtual);
@@ -559,5 +587,38 @@ export class PrintService {
         } catch (error) {
             return 'Data inválida';
         }
+    }
+
+    /**
+     * Quebra um texto em múltiplas linhas baseado na largura máxima
+     */
+    private quebrarTextoEmLinhas(texto: string, maxWidth: number, pdf: jsPDF.jsPDF, fontSize: number): string[] {
+        pdf.setFontSize(fontSize);
+        const palavras = texto.split(' ');
+        const linhas: string[] = [];
+        let linhaAtual = '';
+
+        for (const palavra of palavras) {
+            const testeLinhaAtual = linhaAtual ? `${linhaAtual} ${palavra}` : palavra;
+            const larguraTexto = pdf.getTextWidth(testeLinhaAtual);
+
+            if (larguraTexto <= maxWidth) {
+                linhaAtual = testeLinhaAtual;
+            } else {
+                if (linhaAtual) {
+                    linhas.push(linhaAtual);
+                    linhaAtual = palavra;
+                } else {
+                    // Palavra muito longa, força a quebra
+                    linhas.push(palavra);
+                }
+            }
+        }
+
+        if (linhaAtual) {
+            linhas.push(linhaAtual);
+        }
+
+        return linhas;
     }
 }

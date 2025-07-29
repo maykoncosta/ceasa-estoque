@@ -126,6 +126,12 @@
                                             </tfoot>
                                         </table>
                                     </div>
+                                    
+                                    <!-- Observação da Venda -->
+                                    <div *ngIf="venda.observacao && venda.observacao.trim()" class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                                        <h5 class="text-xs font-medium text-blue-800 mb-2">Observação:</h5>
+                                        <p class="text-xs text-blue-700">{{ venda.observacao }}</p>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

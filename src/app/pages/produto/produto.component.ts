@@ -112,7 +112,7 @@ export class ProdutoComponent extends BaseComponent<Produto> {
 
   // Sobrescrevendo o método para salvar e controlar o modal
   override aposSalvar(): void {
-    this.listarItensPaginados(); // Usa a paginação por padrão
+    this.recarregarItensManterContexto(); // Mantém o contexto da busca e página atual
     this.closeFormModal();
     this.messageService.success();
   }
@@ -134,8 +134,10 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       }
 
       user.then(() => this.aposSalvar())
-        .catch(() => this.messageService.error())
-        .finally(() => this.loaderService.closeLoading());
+        .catch(() => {
+          this.messageService.error()
+          this.loaderService.closeLoading()
+        });
     }
   }
 
@@ -196,7 +198,7 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       );
       
       this.closeEstoqueModal();
-      this.listarItensPaginados(); // Recarregar a lista para mostrar o novo estoque
+      this.recarregarItensManterContexto(); // Recarregar mantendo contexto da busca e página
       
     } catch (error) {
       console.error('Erro ao ajustar estoque:', error);

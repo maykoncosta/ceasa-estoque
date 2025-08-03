@@ -98,6 +98,96 @@ export abstract class BaseComponent<T> implements OnInit {
     }
 
     /**
+     * Recarrega os itens mantendo o contexto atual (página e busca)
+     */
+    recarregarItensManterContexto(): void {
+        this.loaderService.showLoading();
+
+        // Se estamos na primeira página, usar o método padrão
+        if (this.currentPage === 1) {
+            this.buscarItensPaginados(this.pageSize, undefined, this.searchTerm)
+                .then(result => {
+                    this.items = result.items;
+                    this.totalItems = result.total;
+                    this.lastVisible = result.lastVisible;
+                    this.calcularTotalPaginas();
+                })
+                .catch(error => {
+                    console.error('Erro ao recarregar itens:', error);
+                    this.messageService.error('Erro ao recarregar itens');
+                })
+                .finally(() => {
+                    this.loaderService.closeLoading();
+                });
+        } else {
+            // Se estamos em outra página, recarregar desde a primeira página
+            // mas preservar a página atual
+            const paginaAtual = this.currentPage;
+            const historicoAtual = [...this.pageHistory];
+            
+            this.buscarItensPaginados(this.pageSize, undefined, this.searchTerm)
+                .then(async result => {
+                    this.items = result.items;
+                    this.totalItems = result.total;
+                    this.lastVisible = result.lastVisible;
+                    this.calcularTotalPaginas();
+                    
+                    // Resetar o histórico
+                    this.pageHistory = [];
+                    this.currentPage = 1;
+                    
+                    // Navegar de volta para a página original
+                    if (paginaAtual > 1 && paginaAtual <= this.totalPages) {
+                        await this.navegarParaPagina(paginaAtual);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao recarregar itens:', error);
+                    this.messageService.error('Erro ao recarregar itens');
+                })
+                .finally(() => {
+                    this.loaderService.closeLoading();
+                });
+        }
+    }
+
+    /**
+     * Navega para uma página específica
+     */
+    private async navegarParaPagina(targetPage: number): Promise<void> {
+        if (targetPage < 1 || targetPage > this.totalPages || targetPage === this.currentPage) {
+            return;
+        }
+
+        let currentDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+        this.pageHistory = [];
+        
+        // Navegar página por página até a página desejada
+        for (let page = 1; page < targetPage; page++) {
+            const result: {
+                items: T[],
+                total: number,
+                lastVisible?: QueryDocumentSnapshot<DocumentData>
+            } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+            
+            if (result.lastVisible) {
+                this.pageHistory.push(result.lastVisible);
+                currentDoc = result.lastVisible;
+            }
+        }
+        
+        // Carregar a página final
+        const finalResult: {
+            items: T[],
+            total: number,
+            lastVisible?: QueryDocumentSnapshot<DocumentData>
+        } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+        this.items = finalResult.items;
+        this.lastVisible = finalResult.lastVisible;
+        this.currentPage = targetPage;
+    }
+
+    /**
      * Realiza busca por termo
      * @param term Termo para busca
      */
@@ -241,8 +331,8 @@ export abstract class BaseComponent<T> implements OnInit {
                     this.showDeleteModal = false;
                     this.messageService.success();
 
-                    // Atualizar a lista após exclusão
-                    this.listarItensPaginados();
+                    // Atualizar a lista após exclusão mantendo contexto
+                    this.recarregarItensManterContexto();
                 })
                 .catch((err) => {
                     this.itemToDelete = undefined;
@@ -261,7 +351,7 @@ export abstract class BaseComponent<T> implements OnInit {
             && (formGroup.touched || formGroup.controls[field].touched || frmDirective.submitted);
     }    // Método para compatibilidade com implementações existentes
     aposSalvar(): void {
-        this.listarItensPaginados();
+        this.recarregarItensManterContexto();
         this.onCreate = false;
         this.onEdit = false;
         this.messageService.success();

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Venda, VendaService } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
@@ -20,6 +20,7 @@ export class VendaComponent extends BaseComponent<Venda> {
     loaderService: LoaderService,
     private vendaService: VendaService,
     private router: Router,
+    private route: ActivatedRoute,
     private printService: PrintService
   ) {
     super(loaderService, messageService);
@@ -56,11 +57,34 @@ export class VendaComponent extends BaseComponent<Venda> {
   }
 
   override onCreateItem(): void {
-    this.router.navigate(['/vendas/nova']);
+    // Preservar contexto atual ao navegar para criar nova venda
+    const queryParams = this.buildQueryParams();
+    this.router.navigate(['/vendas/nova'], { queryParams });
   }
 
   override onEditItem(venda: Venda): void {
-    this.router.navigate(['/vendas/editar', venda.id]);
+    // Preservar contexto atual ao navegar para editar venda
+    const queryParams = this.buildQueryParams();
+    this.router.navigate(['/vendas/editar', venda.id], { queryParams });
+  }
+
+  // Método auxiliar para construir query parameters do contexto atual
+  private buildQueryParams(): any {
+    const params: any = {};
+    
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      params.searchTerm = this.searchTerm;
+    }
+    
+    if (this.currentPage > 1) {
+      params.page = this.currentPage;
+    }
+    
+    if (this.pageSize !== 10) { // 10 é o padrão
+      params.pageSize = this.pageSize;
+    }
+    
+    return Object.keys(params).length > 0 ? params : null;
   }
 
   // Método para lidar com a exclusão de vendas
@@ -123,5 +147,83 @@ export class VendaComponent extends BaseComponent<Venda> {
   }
 
   override onLoadValues(): void {
+    // Verificar se há parâmetros de contexto para restaurar
+    this.route.queryParams.subscribe((params: any) => {
+      if (params['searchTerm']) {
+        this.searchTerm = params['searchTerm'];
+      }
+      
+      if (params['pageSize']) {
+        this.pageSize = parseInt(params['pageSize']);
+        this.paginationConfig.pageSize = this.pageSize;
+      }
+      
+      // Se há página específica, será restaurada após o carregamento inicial
+      if (params['page']) {
+        const targetPage = parseInt(params['page']);
+        // Aguardar o carregamento inicial e depois navegar para a página específica
+        setTimeout(() => {
+          this.navegarParaPaginaEspecifica(targetPage);
+        }, 100);
+      }
+    });
+  }
+
+  // Método para navegar para uma página específica (público para uso interno)
+  private async navegarParaPaginaEspecifica(targetPage: number): Promise<void> {
+    if (targetPage <= 1 || targetPage === this.currentPage) {
+      return;
+    }
+
+    try {
+      this.loaderService.showLoading();
+      
+      let currentDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+      this.pageHistory = [];
+      
+      // Navegar página por página até a página desejada
+      for (let page = 1; page < targetPage; page++) {
+        const result: {
+          items: Venda[],
+          total: number,
+          lastVisible?: QueryDocumentSnapshot<DocumentData>
+        } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+        
+        if (result.lastVisible) {
+          this.pageHistory.push(result.lastVisible);
+          currentDoc = result.lastVisible;
+        }
+      }
+      
+      // Carregar a página final
+      const finalResult: {
+        items: Venda[],
+        total: number,
+        lastVisible?: QueryDocumentSnapshot<DocumentData>
+      } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+      
+      this.items = finalResult.items;
+      this.lastVisible = finalResult.lastVisible;
+      this.currentPage = targetPage;
+      
+    } catch (error) {
+      console.error('Erro ao restaurar página:', error);
+      this.messageService.error('Erro ao restaurar posição na lista');
+    } finally {
+      this.loaderService.closeLoading();
+    }
+  }
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    
+    // Limpar query parameters após restaurar o contexto para manter a URL limpa
+    setTimeout(() => {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true
+      });
+    }, 500);
   }
 }

@@ -466,7 +466,26 @@ export class VendaFormComponent implements OnInit {
   }
 
   voltarParaLista(): void {
-    this.router.navigate(['/vendas']);
+    // Restaurar contexto se existir nos query parameters
+    this.route.queryParams.subscribe((params: any) => {
+      const queryParams: any = {};
+      
+      if (params['searchTerm']) {
+        queryParams.searchTerm = params['searchTerm'];
+      }
+      
+      if (params['page']) {
+        queryParams.page = params['page'];
+      }
+      
+      if (params['pageSize']) {
+        queryParams.pageSize = params['pageSize'];
+      }
+      
+      this.router.navigate(['/vendas'], { 
+        queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined 
+      });
+    });
   }
 
   hasFieldError(form: UntypedFormGroup, field: string, error: string, ngForm: any): boolean {

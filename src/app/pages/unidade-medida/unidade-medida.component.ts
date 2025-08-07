@@ -91,7 +91,7 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
 
   // Sobrescrevendo o método para salvar e controlar o modal
   override aposSalvar(): void {
-    this.listarItensPaginados(); // Usa a paginação por padrão
+    this.recarregarItensManterContexto(); // Mantém o contexto da busca e página atual
     this.closeFormModal();
     this.messageService.success();
   }

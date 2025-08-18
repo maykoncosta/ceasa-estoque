@@ -44,6 +44,51 @@ export class ClienteComponent extends BaseComponent<Cliente> {
     // Não há valores adicionais para carregar neste componente
   }
 
+  // Método para navegar para uma página específica (público para uso interno)
+  private async navegarParaPaginaEspecifica(targetPage: number): Promise<void> {
+    if (targetPage <= 1 || targetPage === this.currentPage) {
+      return;
+    }
+
+    try {
+      this.loaderService.showLoading();
+      
+      let currentDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+      this.pageHistory = [];
+      
+      // Navegar página por página até a página desejada
+      for (let page = 1; page < targetPage; page++) {
+        const result: {
+          items: Cliente[],
+          total: number,
+          lastVisible?: QueryDocumentSnapshot<DocumentData>
+        } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+        
+        if (result.lastVisible) {
+          this.pageHistory.push(result.lastVisible);
+          currentDoc = result.lastVisible;
+        }
+      }
+      
+      // Carregar a página final
+      const finalResult: {
+        items: Cliente[],
+        total: number,
+        lastVisible?: QueryDocumentSnapshot<DocumentData>
+      } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+      
+      this.items = finalResult.items;
+      this.lastVisible = finalResult.lastVisible;
+      this.currentPage = targetPage;
+      
+    } catch (error) {
+      console.error('Erro ao restaurar página:', error);
+      this.messageService.error('Erro ao restaurar posição na lista');
+    } finally {
+      this.loaderService.closeLoading();
+    }
+  }
+
   // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
   override async buscarItensPaginados(
     pageSize: number, 
@@ -140,23 +185,76 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   }
 
   override ngOnInit(): void {
-    // Verificar se há query parameters de filtro
+    // Verificar query parameters antes de chamar o ngOnInit do pai
     this.route.queryParams.subscribe(params => {
-      this.filtroAtivo = params['filtro'] || null;
+      // Verificar se estamos restaurando contexto de navegação
+      const isRestoringContext = params['searchTerm'] || params['page'] || params['pageSize'];
       
-      // Se há filtro de clientes frequentes, extrair a lista de nomes
-      if (this.filtroAtivo === 'frequentes' && params['clientes']) {
-        try {
-          this.clientesFrequentesNomes = JSON.parse(decodeURIComponent(params['clientes']));
-        } catch (e) {
-          console.error('Erro ao parsear lista de clientes frequentes:', e);
-          this.clientesFrequentesNomes = [];
+      if (isRestoringContext) {
+        // Restaurar contexto de navegação
+        if (params['searchTerm']) {
+          this.searchTerm = params['searchTerm'];
+        }
+        
+        if (params['pageSize']) {
+          this.pageSize = parseInt(params['pageSize']);
+          this.paginationConfig.pageSize = this.pageSize;
+        }
+        
+        if (params['filtro']) {
+          this.filtroAtivo = params['filtro'];
+        }
+        
+        if (params['clientes']) {
+          try {
+            this.clientesFrequentesNomes = JSON.parse(decodeURIComponent(params['clientes']));
+          } catch (e) {
+            console.error('Erro ao parsear lista de clientes frequentes:', e);
+            this.clientesFrequentesNomes = [];
+          }
+        }
+      } else {
+        // Lógica original para filtros vindos do dashboard
+        this.filtroAtivo = params['filtro'] || null;
+        
+        if (this.filtroAtivo === 'frequentes' && params['clientes']) {
+          try {
+            this.clientesFrequentesNomes = JSON.parse(decodeURIComponent(params['clientes']));
+          } catch (e) {
+            console.error('Erro ao parsear lista de clientes frequentes:', e);
+            this.clientesFrequentesNomes = [];
+          }
         }
       }
     });
 
     // Chamar o ngOnInit da classe pai
     super.ngOnInit();
+
+    // Se há página específica para restaurar, fazer isso após o carregamento inicial
+    this.route.queryParams.subscribe(params => {
+      if (params['page'] && parseInt(params['page']) > 1) {
+        const targetPage = parseInt(params['page']);
+        setTimeout(() => {
+          this.navegarParaPaginaEspecifica(targetPage);
+        }, 200);
+      }
+
+      // Limpar query parameters de contexto após uso (mas manter filtros originais)
+      if (params['searchTerm'] || params['page'] || params['pageSize']) {
+        setTimeout(() => {
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {
+              // Manter apenas parâmetros de filtro originais se existirem
+              ...(this.filtroAtivo && !params['searchTerm'] ? { filtro: this.filtroAtivo } : {}),
+              ...(this.clientesFrequentesNomes.length > 0 && !params['searchTerm'] ? { clientes: encodeURIComponent(JSON.stringify(this.clientesFrequentesNomes)) } : {})
+            },
+            replaceUrl: true
+          });
+        }, 1000);
+      }
+    });
   }
 
   limparFiltros(): void {
@@ -167,6 +265,35 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   }
 
   verVendasCliente(nomeCliente: string): void {
-    this.router.navigate(['/clientes', nomeCliente, 'vendas']);
+    // Preservar contexto atual ao navegar para vendas do cliente
+    const queryParams = this.buildQueryParams();
+    this.router.navigate(['/clientes', nomeCliente, 'vendas'], { queryParams });
+  }
+
+  // Método auxiliar para construir query parameters do contexto atual
+  private buildQueryParams(): any {
+    const params: any = {};
+    
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      params.searchTerm = this.searchTerm;
+    }
+    
+    if (this.currentPage > 1) {
+      params.page = this.currentPage;
+    }
+    
+    if (this.pageSize !== 10) { // 10 é o padrão
+      params.pageSize = this.pageSize;
+    }
+    
+    if (this.filtroAtivo) {
+      params.filtro = this.filtroAtivo;
+    }
+    
+    if (this.clientesFrequentesNomes.length > 0) {
+      params.clientes = encodeURIComponent(JSON.stringify(this.clientesFrequentesNomes));
+    }
+    
+    return Object.keys(params).length > 0 ? params : null;
   }
 }

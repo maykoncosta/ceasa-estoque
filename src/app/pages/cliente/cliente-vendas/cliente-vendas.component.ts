@@ -126,7 +126,34 @@ export class ClienteVendasComponent implements OnInit {
   }
 
   voltarParaClientes(): void {
-    this.router.navigate(['/clientes']);
+    // Restaurar contexto se existir nos query parameters
+    this.route.queryParams.subscribe((params: any) => {
+      const queryParams: any = {};
+      
+      if (params['searchTerm']) {
+        queryParams.searchTerm = params['searchTerm'];
+      }
+      
+      if (params['page']) {
+        queryParams.page = params['page'];
+      }
+      
+      if (params['pageSize']) {
+        queryParams.pageSize = params['pageSize'];
+      }
+      
+      if (params['filtro']) {
+        queryParams.filtro = params['filtro'];
+      }
+      
+      if (params['clientes']) {
+        queryParams.clientes = params['clientes'];
+      }
+      
+      this.router.navigate(['/clientes'], { 
+        queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined 
+      });
+    });
   }
 
   // Métodos de paginação

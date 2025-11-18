@@ -52,6 +52,9 @@
                     <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Venda</th>
                     <th class="sm:p-1 text-left text-sm md:text-base lg:text-base">Uni. Medida</th>                    <th class="sm:p-2 max-w-24 min-w-16">
                         <div class="flex gap-2 justify-center">
+                            <i class="fa-solid fa-eraser cursor-pointer text-red-600 hover:text-red-800" 
+                               (click)="confirmarZerarEstoque()" 
+                               title="Zerar Estoque de Todos os Produtos"></i>
                             <i class="fa-solid fa-print cursor-pointer text-green-600 hover:text-green-800" 
                                (click)="imprimirProdutos()" 
                                title="Imprimir Lista"></i>
@@ -151,4 +154,23 @@
 </app-produto-estoque-modal>
 
 <app-confirm-modal [show]="showDeleteModal" (confirm)="onDeleteItem()" (cancel)="showDeleteModal = false">
+</app-confirm-modal>
+
+<!-- Modal de confirmação para zerar estoque -->
+<app-confirm-modal [show]="showZerarEstoqueModal" 
+                   (confirm)="zerarEstoqueTodosProdutos()" 
+                   (cancel)="showZerarEstoqueModal = false">
+    <div class="text-center">
+        <i class="fa-solid fa-triangle-exclamation text-yellow-500 text-5xl mb-4"></i>
+        <p class="text-lg font-semibold mb-2">Atenção!</p>
+        <p class="text-gray-700">
+            Você está prestes a <strong>zerar o estoque de TODOS os produtos</strong>.
+        </p>
+        <p class="text-gray-700 mt-2">
+            Esta ação criará um registro de ajuste para cada produto e não pode ser desfeita.
+        </p>
+        <p class="text-red-600 font-semibold mt-3">
+            Deseja realmente continuar?
+        </p>
+    </div>
 </app-confirm-modal>

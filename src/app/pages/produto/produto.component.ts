@@ -213,4 +213,34 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       this.loaderService.closeLoading();
     }
   }
+
+  // Controle do modal de confirmação para zerar estoque
+  showZerarEstoqueModal = false;
+
+  // Método para mostrar modal de confirmação de zerar estoque
+  confirmarZerarEstoque(): void {
+    this.showZerarEstoqueModal = true;
+  }
+
+  // Método para zerar estoque de todos os produtos
+  async zerarEstoqueTodosProdutos(): Promise<void> {
+    this.loaderService.showLoading();
+    
+    try {
+      const quantidadeZerada = await this.produtoService.zerarEstoqueTodosProdutos();
+      
+      this.messageService.success(
+        `Estoque zerado com sucesso! ${quantidadeZerada} produto(s) foram zerados.`
+      );
+      
+      this.showZerarEstoqueModal = false;
+      this.recarregarItensManterContexto(); // Recarregar mantendo contexto da busca e página
+      
+    } catch (error) {
+      console.error('Erro ao zerar estoque:', error);
+      this.messageService.error('Erro ao zerar estoque de todos os produtos');
+    } finally {
+      this.loaderService.closeLoading();
+    }
+  }
 }

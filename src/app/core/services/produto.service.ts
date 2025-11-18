@@ -384,4 +384,50 @@ export class ProdutoService {
     
     return produto || null;
   }
+
+  // Método para zerar estoque de todos os produtos
+  async zerarEstoqueTodosProdutos(): Promise<number> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Usuário não autenticado');
+
+    const produtosRef = collection(this.firestore, 'produtos');
+    const q = query(produtosRef, where('empresa_id', '==', user.uid));
+    const querySnapshot = await getDocs(q);
+    
+    let contador = 0;
+    const batchPromises: Promise<any>[] = [];
+
+    querySnapshot.forEach((docSnapshot) => {
+      const produto = { id: docSnapshot.id, ...docSnapshot.data() } as Produto;
+      
+      // Zerar produtos com estoque diferente de zero (positivo ou negativo)
+      if (produto.estoque !== 0) {
+        const produtoDoc = doc(this.firestore, `produtos/${produto.id}`);
+        
+        // Criar registro de ajuste
+        const ajusteEstoque: AjusteEstoque = {
+          produto_id: produto.id,
+          produto_nome: produto.nome,
+          empresa_id: user.uid,
+          estoque_anterior: produto.estoque,
+          quantidade_ajuste: -produto.estoque,
+          estoque_novo: 0,
+          data: new Date(),
+          usuario_id: user.uid
+        };
+        
+        // Adicionar as operações ao array
+        batchPromises.push(
+          updateDoc(produtoDoc, { estoque: 0 }),
+          addDoc(collection(this.firestore, 'ajustes_estoque'), ajusteEstoque).then(() => {})
+        );
+        contador++;
+      }
+    });
+
+    // Executar todas as operações
+    await Promise.all(batchPromises);
+    
+    return contador;
+  }
 }

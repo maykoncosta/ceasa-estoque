@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { Venda, VendaService } from 'src/app/core/services/venda.service';
@@ -9,6 +10,8 @@ import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   selector: 'app-venda-form',
   templateUrl: './venda-form.component.html',
   styleUrls: ['./venda-form.component.css']

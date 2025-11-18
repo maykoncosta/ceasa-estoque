@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EmpresaService } from 'src/app/core/services/empresa.service';
@@ -11,8 +12,12 @@ import {
   ESTADOS_BRASIL, 
   CORES_PREDEFINIDAS 
 } from 'src/app/shared/models/empresa.model';
+import { ConfirmModalComponent } from 'src/app/shared/confirm-modal/confirm-modal.component';
+import { UploadLogoComponent } from './upload-logo/upload-logo.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, ConfirmModalComponent, UploadLogoComponent],
   selector: 'app-conta',
   templateUrl: './conta.component.html',
   styleUrls: ['./conta.component.css']

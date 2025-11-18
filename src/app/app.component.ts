@@ -1,13 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { EmpresaService } from './core/services/empresa.service';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { User } from '@angular/fire/auth';
 import { Empresa } from './shared/models/empresa.model';
+import { LoaderComponent } from './shared/loader/loader.component';
+import { MessageComponent } from './shared/message/message.component';
+import { SidebarComponent } from './pages/sidebar/sidebar.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, RouterModule, LoaderComponent, MessageComponent, SidebarComponent],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']

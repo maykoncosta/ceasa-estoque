@@ -1,12 +1,17 @@
 import { Component } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormsModule, UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { UnidadeMedida, UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { ConfirmModalComponent } from 'src/app/shared/confirm-modal/confirm-modal.component';
+import { UnidadeMedidaFormModalComponent } from './unidade-medida-form-modal/unidade-medida-form-modal.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ConfirmModalComponent, UnidadeMedidaFormModalComponent],
   selector: 'app-unidade-medida',
   templateUrl: './unidade-medida.component.html',
   styleUrls: ['./unidade-medida.component.css']

@@ -6,7 +6,7 @@ import { provideStorage, getStorage, connectStorageEmulator } from '@angular/fir
 import { environment } from '../../environments/environment';
 
 @NgModule({
-  imports: [
+  providers: [
     provideFirebaseApp(() => {
       const app = initializeApp(environment.firebase);
       return app;

@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Message, MessageService } from '../services/message.service';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'app-message',
   templateUrl: './message.component.html',
   styleUrls: ['./message.component.css']

@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Venda, VendaService } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   selector: 'app-cliente-vendas',
   templateUrl: './cliente-vendas.component.html',
   styleUrls: ['./cliente-vendas.component.css']

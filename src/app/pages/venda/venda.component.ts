@@ -1,13 +1,18 @@
 import { Component } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Venda, VendaService } from 'src/app/core/services/venda.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
 import { PrintService } from 'src/app/shared/services/print.service';
+import { ConfirmModalComponent } from 'src/app/shared/confirm-modal/confirm-modal.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, ConfirmModalComponent],
   selector: 'app-venda',
   templateUrl: './venda.component.html',
   styleUrls: ['./venda.component.css']

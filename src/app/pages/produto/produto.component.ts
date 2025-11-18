@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule, UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Produto, ProdutoService } from 'src/app/core/services/produto.service';
 import { UnidadeMedidaService } from 'src/app/core/services/unidade-medida.service';
@@ -8,8 +9,13 @@ import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { PrintService } from 'src/app/shared/services/print.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { ConfirmModalComponent } from 'src/app/shared/confirm-modal/confirm-modal.component';
+import { ProdutoFormModalComponent } from './produto-form-modal/produto-form-modal.component';
+import { ProdutoEstoqueModalComponent } from './produto-estoque-modal/produto-estoque-modal.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ConfirmModalComponent, ProdutoFormModalComponent, ProdutoEstoqueModalComponent],
   selector: 'app-produto',
   templateUrl: './produto.component.html',
   styleUrls: ['./produto.component.css']

@@ -1,8 +1,11 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Produto } from 'src/app/core/services/produto.service';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   selector: 'app-produto-estoque-modal',
   templateUrl: './produto-estoque-modal.component.html',
   styleUrls: ['./produto-estoque-modal.component.css']

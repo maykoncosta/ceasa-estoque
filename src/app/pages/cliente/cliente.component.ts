@@ -1,14 +1,19 @@
 import { Component } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule, UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BaseComponent } from 'src/app/shared/components/base.component';
 import { Cliente, ClienteService } from 'src/app/core/services/cliente.service';
 import { LoaderService } from 'src/app/shared/services/loader.service';
 import { MessageService } from 'src/app/shared/services/message.service';
 import { PhoneValidatorService } from 'src/app/shared/services/phone-validator.service';
 import { QueryDocumentSnapshot, DocumentData } from '@angular/fire/firestore';
+import { ConfirmModalComponent } from 'src/app/shared/confirm-modal/confirm-modal.component';
+import { ClienteFormModalComponent } from './cliente-form-modal/cliente-form-modal.component';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ConfirmModalComponent, ClienteFormModalComponent],
   selector: 'app-cliente',
   templateUrl: './cliente.component.html',
   styleUrls: ['./cliente.component.css']

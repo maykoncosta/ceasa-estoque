@@ -1,10 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Cliente } from 'src/app/core/services/cliente.service';
 import { PhoneValidatorService } from 'src/app/shared/services/phone-validator.service';
 import { BaseFormModalComponent } from 'src/app/shared/components';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   selector: 'app-cliente-form-modal',
   templateUrl: './cliente-form-modal.component.html',
   styleUrls: ['./cliente-form-modal.component.css']

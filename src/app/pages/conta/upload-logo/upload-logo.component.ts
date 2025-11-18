@@ -1,6 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'app-upload-logo',
   templateUrl: './upload-logo.component.html',
   styleUrls: ['./upload-logo.component.css']

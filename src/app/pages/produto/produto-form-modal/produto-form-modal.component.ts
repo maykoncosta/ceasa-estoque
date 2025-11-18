@@ -1,9 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Produto } from 'src/app/core/services/produto.service';
 import { BaseFormModalComponent } from 'src/app/shared/components';
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   selector: 'app-produto-form-modal',
   templateUrl: './produto-form-modal.component.html',
   styleUrls: ['./produto-form-modal.component.css']

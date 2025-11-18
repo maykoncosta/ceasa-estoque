@@ -6,9 +6,8 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "dist/ceasa-estoque",
+    "public": "dist/ceasa-estoque/browser",
     "ignore": [
-      "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],

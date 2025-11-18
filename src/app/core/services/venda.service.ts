@@ -238,7 +238,7 @@ export class VendaService {
     return { items: vendas, total, lastVisible };
   }
 
-  // Método para buscar vendas de um cliente específico
+  // Método para buscar vendas de um cliente específico (apenas não pagas)
   async buscarVendasPorCliente(
     clienteNome: string,
     pageSize: number,
@@ -250,53 +250,54 @@ export class VendaService {
     const vendasRef = collection(this.firestore, 'vendas');
     const clienteUppercase = clienteNome.toLocaleUpperCase();
     
-    // Query para contagem total
-    const countQuery = query(
+    // Query base para buscar todas as vendas do cliente
+    const baseQuery = query(
       vendasRef,
-      where('empresa_id', '==', user.uid),
-      where('cliente', '==', clienteUppercase)
-    );
-    
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
-    // Query paginada
-    let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
       where('cliente', '==', clienteUppercase),
       orderBy('data', 'desc')
-    ];
+    );
     
-    if (startAfterDoc) {
-      queryConstraints.push(startAfter(startAfterDoc));
-    }
+    const allVendasSnapshot = await getDocs(baseQuery);
     
-    queryConstraints.push(limit(pageSize));
-    
-    const paginatedQuery = query(vendasRef, ...queryConstraints);
-    const snapshot = await getDocs(paginatedQuery);
-    
-    const vendas: Venda[] = [];
-    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
-    
-    snapshot.forEach((doc) => {
+    // Filtrar apenas vendas não pagas (valor_pago < valor_total)
+    const vendasNaoPagas: Venda[] = [];
+    allVendasSnapshot.forEach((doc) => {
       const data = doc.data();
-      vendas.push({
-        id: doc.id,
-        empresa_id: data['empresa_id'],
-        produtos: data['produtos'],
-        valor_total: data['valor_total'],
-        lucro_total: data['lucro_total'],
-        data: data['data'],
-        cliente: data['cliente'],
-        valor_pago: data['valor_pago'] || 0,
-        observacao: data['observacao'],
-        expandido: false
-      });
-      lastVisible = doc;
+      const valorPago = data['valor_pago'] || 0;
+      const valorTotal = data['valor_total'];
+      
+      // Incluir apenas vendas não totalmente pagas
+      if (valorPago < valorTotal) {
+        vendasNaoPagas.push({
+          id: doc.id,
+          empresa_id: data['empresa_id'],
+          produtos: data['produtos'],
+          valor_total: valorTotal,
+          lucro_total: data['lucro_total'],
+          data: data['data'],
+          cliente: data['cliente'],
+          valor_pago: valorPago,
+          observacao: data['observacao'],
+          expandido: false
+        });
+      }
     });
     
-    return { items: vendas, total, lastVisible };
+    const total = vendasNaoPagas.length;
+    
+    // Aplicar paginação manualmente
+    const startIndex = startAfterDoc ? 
+      vendasNaoPagas.findIndex(v => v.id === startAfterDoc.id) + 1 : 0;
+    const endIndex = startIndex + pageSize;
+    const vendasPaginadas = vendasNaoPagas.slice(startIndex, endIndex);
+    
+    // Criar um lastVisible simulado para manter compatibilidade
+    const lastVisible = vendasPaginadas.length > 0 ? 
+      allVendasSnapshot.docs.find(doc => doc.id === vendasPaginadas[vendasPaginadas.length - 1].id) : 
+      undefined;
+    
+    return { items: vendasPaginadas, total, lastVisible };
   }
 
   // Método para buscar uma venda específica por ID

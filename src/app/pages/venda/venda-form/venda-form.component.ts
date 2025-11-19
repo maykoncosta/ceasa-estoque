@@ -205,9 +205,6 @@ export class VendaFormComponent implements OnInit {
       const qtdInput = document.getElementById('quantidade');
       if (qtdInput) {
         qtdInput.focus();
-        if (!this.formProdutos.get('quantidade')?.value) {
-          this.formProdutos.get('quantidade')?.setValue(1);
-        }
       }
     }, 100);
   }
@@ -250,10 +247,6 @@ export class VendaFormComponent implements OnInit {
         const qtdInput = document.getElementById('quantidade');
         if (qtdInput) {
           qtdInput.focus();
-          // Definir uma quantidade padrão de 1
-          if (!this.formProdutos.get('quantidade')?.value) {
-            this.formProdutos.get('quantidade')?.setValue(1);
-          }
         }
       }, 100);
     }

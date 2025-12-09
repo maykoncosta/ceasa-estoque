@@ -398,14 +398,26 @@ export class VendaFormComponent implements OnInit {
 
     // Método para baixar estoque na criação (como estava funcionando)
     const atualizarEstoqueNovoProduto = async () => {
-      for (const produto of venda.produtos) {
-        const produtoAtual = this.produtos.find(p => p.id === produto.produto_id);
+      // Agrupar produtos por ID e somar quantidades (para lidar com produtos duplicados)
+      const quantidadesPorProduto: { [key: string]: number } = {};
+      venda.produtos.forEach(produto => {
+        if (quantidadesPorProduto[produto.produto_id]) {
+          quantidadesPorProduto[produto.produto_id] += produto.quantidade;
+        } else {
+          quantidadesPorProduto[produto.produto_id] = produto.quantidade;
+        }
+      });
+
+      // Atualizar estoque para cada produto único
+      for (const produtoId of Object.keys(quantidadesPorProduto)) {
+        const produtoAtual = this.produtos.find(p => p.id === produtoId);
         if (produtoAtual) {
-          const novoEstoque = produtoAtual.estoque - produto.quantidade;
+          const quantidadeTotal = quantidadesPorProduto[produtoId];
+          const novoEstoque = produtoAtual.estoque - quantidadeTotal;
           if (novoEstoque < 0) {
             this.messageService.info(`Estoque negativado para o produto: ${produtoAtual.nome}`);
           }
-          await this.produtoService.atualizarProduto(produto.produto_id, { estoque: novoEstoque });
+          await this.produtoService.atualizarProduto(produtoId, { estoque: novoEstoque });
         }
       }
     };

@@ -93,7 +93,7 @@ export class UnidadeMedidaService {
     const user = this.auth.currentUser;
     if (!user) return;
     
-    const unidadeDoc = doc(this.firestore, `unidades/${id}`);
+    const unidadeDoc = doc(this.firestore, 'unidades', id);
     const produtosRef = collection(this.firestore, 'produtos');
 
     const q = query(produtosRef,

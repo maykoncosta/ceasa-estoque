@@ -299,7 +299,7 @@ export class ProdutoService {
   }
 
   excluirProduto(id: string) {
-    const produtoDoc = doc(this.firestore, `produtos/${id}`);
+    const produtoDoc = doc(this.firestore, 'produtos', id);
     return deleteDoc(produtoDoc) ;
   }
   // Método para ajustar estoque com histórico
@@ -395,14 +395,24 @@ export class ProdutoService {
     const querySnapshot = await getDocs(q);
     
     let contador = 0;
-    const batchPromises: Promise<any>[] = [];
 
-    querySnapshot.forEach((docSnapshot) => {
-      const produto = { id: docSnapshot.id, ...docSnapshot.data() } as Produto;
+    // Processar cada produto
+    for (const docSnapshot of querySnapshot.docs) {
+      const data = docSnapshot.data();
+      const produto: Produto = {
+        id: docSnapshot.id,
+        empresa_id: data['empresa_id'],
+        nome: data['nome'],
+        preco_compra: data['preco_compra'],
+        preco_venda: data['preco_venda'],
+        estoque: data['estoque'],
+        unidadeMedida: data['unidadeMedida']
+      };
       
       // Zerar produtos com estoque diferente de zero (positivo ou negativo)
       if (produto.estoque !== 0) {
-        const produtoDoc = doc(this.firestore, `produtos/${produto.id}`);
+        // Atualizar o estoque do produto
+        await this.atualizarProduto(produto.id, { estoque: 0 });
         
         // Criar registro de ajuste
         const ajusteEstoque: AjusteEstoque = {
@@ -416,17 +426,12 @@ export class ProdutoService {
           usuario_id: user.uid
         };
         
-        // Adicionar as operações ao array
-        batchPromises.push(
-          updateDoc(produtoDoc, { estoque: 0 }),
-          addDoc(collection(this.firestore, 'ajustes_estoque'), ajusteEstoque).then(() => {})
-        );
+        // Adicionar registro de ajuste
+        await addDoc(collection(this.firestore, 'ajustes_estoque'), ajusteEstoque);
+        
         contador++;
       }
-    });
-
-    // Executar todas as operações
-    await Promise.all(batchPromises);
+    }
     
     return contador;
   }

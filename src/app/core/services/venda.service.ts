@@ -136,22 +136,33 @@ export class VendaService {
       produtosMap.set(doc.id, { id: doc.id, ...doc.data() });
     });
 
-    // Devolver estoque para cada produto da venda
-    for (const produto of venda.produtos) {
+    // Agrupar produtos por ID e somar quantidades (para lidar com produtos duplicados)
+    const quantidadesPorProduto: { [key: string]: number } = {};
+    venda.produtos.forEach(produto => {
+      if (quantidadesPorProduto[produto.produto_id]) {
+        quantidadesPorProduto[produto.produto_id] += produto.quantidade;
+      } else {
+        quantidadesPorProduto[produto.produto_id] = produto.quantidade;
+      }
+    });
+
+    // Devolver estoque para cada produto único
+    for (const produtoId of Object.keys(quantidadesPorProduto)) {
       try {
-        const produtoAtual = produtosMap.get(produto.produto_id);
+        const produtoAtual = produtosMap.get(produtoId);
         if (produtoAtual) {
-          const novoEstoque = produtoAtual.estoque + produto.quantidade;
-          await updateDoc(doc(this.firestore, 'produtos', produto.produto_id), { estoque: novoEstoque });
+          const quantidadeTotal = quantidadesPorProduto[produtoId];
+          const novoEstoque = produtoAtual.estoque + quantidadeTotal;
+          await updateDoc(doc(this.firestore, 'produtos', produtoId), { estoque: novoEstoque });
         }
       } catch (error) {
-        console.error(`Erro ao devolver estoque do produto ${produto.nome}:`, error);
+        console.error(`Erro ao devolver estoque do produto ${produtoId}:`, error);
         // Continua com os outros produtos mesmo se um falhar
       }
     }
 
     // Após devolver o estoque, excluir a venda
-    const vendaDoc = doc(this.firestore, `vendas/${id}`);
+    const vendaDoc = doc(this.firestore, 'vendas', id);
     return deleteDoc(vendaDoc);
   }
 

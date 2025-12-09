@@ -124,7 +124,7 @@ export class ClienteService {
       throw new Error('Não é possível excluir o cliente pois ele possui vendas associadas!');
     }
 
-    const clienteDoc = doc(this.firestore, `clientes/${id}`);
+    const clienteDoc = doc(this.firestore, 'clientes', id);
     return deleteDoc(clienteDoc);
   }
 

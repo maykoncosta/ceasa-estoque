@@ -34,8 +34,18 @@ export abstract class BaseFormModalComponent<T> implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes[this.itemPropertyName] && this.currentItem && this.form) {
-      this.form.patchValue(this.currentItem);
+    if (changes[this.itemPropertyName] && this.form) {
+      if (this.currentItem) {
+        this.form.patchValue(this.currentItem);
+      } else {
+        // Se não há item (modo de criação), resetar o formulário
+        this.form.reset();
+      }
+    }
+    
+    // Resetar quando o modal é aberto em modo de criação
+    if (changes['show'] && this.show && !this.isEdit && this.form) {
+      this.form.reset();
     }
   }
 

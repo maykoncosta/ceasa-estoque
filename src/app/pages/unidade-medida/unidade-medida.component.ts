@@ -79,6 +79,11 @@ export class UnidadeMedidaComponent extends BaseComponent<UnidadeMedida> {
     this.onEdit = false;
     this.onCreate = false;
     this.selectedUnidadeMedida = null;
+    
+    // Forçar o reset do item selecionado para limpar o formulário no próximo uso
+    setTimeout(() => {
+      this.selectedUnidadeMedida = null;
+    }, 100);
   }
 
   // Sobrescrevendo os métodos do BaseComponent

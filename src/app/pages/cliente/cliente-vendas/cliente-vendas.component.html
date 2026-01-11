@@ -86,13 +86,22 @@
                             </span>
                         </td>
                         <td class="p-3 text-center">
-                            <button 
-                                *ngIf="vendaEditando !== venda.id"
-                                (click)="iniciarEdicao(venda)"
-                                class="text-blue-600 hover:text-blue-800 p-1 bg-transparent"
-                                title="Editar valor pago">
-                                <i class="fa-solid fa-edit"></i>
-                            </button>
+                            <div class="flex items-center justify-center gap-2">
+                                <button 
+                                    *ngIf="vendaEditando !== venda.id && !isVendaPaga(venda)"
+                                    (click)="quitarVenda(venda)"
+                                    class="text-green-600 hover:text-green-800 p-1 bg-transparent"
+                                    title="Quitar venda">
+                                    <i class="fa-solid fa-dollar-sign"></i>
+                                </button>
+                                <button 
+                                    *ngIf="vendaEditando !== venda.id"
+                                    (click)="iniciarEdicao(venda)"
+                                    class="text-blue-600 hover:text-blue-800 p-1 bg-transparent"
+                                    title="Editar valor pago">
+                                    <i class="fa-solid fa-edit"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     

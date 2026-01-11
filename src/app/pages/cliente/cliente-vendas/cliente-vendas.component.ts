@@ -129,7 +129,29 @@ export class ClienteVendasComponent implements OnInit {
   }
 
   isVendaPaga(venda: Venda): boolean {
-    return this.calcularSaldo(venda) <= 0;
+    const saldo = this.calcularSaldo(venda);
+    // Usar tolerância de 0.01 para lidar com precisão de ponto flutuante
+    return saldo < 0.01;
+  }
+
+  quitarVenda(venda: Venda): void {
+    if (this.isVendaPaga(venda)) {
+      this.messageService.info('Esta venda já está quitada');
+      return;
+    }
+
+    this.loaderService.showLoading();
+    const valorTotal = venda.valor_total;
+    
+    this.vendaService.atualizarVenda(venda.id!, { valor_pago: valorTotal }).then(() => {
+      venda.valor_pago = valorTotal;
+      this.messageService.success('Venda quitada com sucesso!');
+      this.loaderService.closeLoading();
+    }).catch((error: any) => {
+      console.error('Erro ao quitar venda:', error);
+      this.messageService.error('Erro ao quitar venda');
+      this.loaderService.closeLoading();
+    });
   }
 
   voltarParaClientes(): void {

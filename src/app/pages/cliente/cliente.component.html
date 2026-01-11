@@ -75,17 +75,16 @@
         <div class="flex flex-col md:flex-row justify-between items-center mt-4 px-2">
             <!-- Informação da página -->
             <div class="text-sm text-gray-600 mb-2 md:mb-0">
-                <span *ngIf="totalItems > 0">
-                    Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, totalItems)
-                    }} de {{ totalItems }} clientes
+                <span *ngIf="items.length > 0">
+                    Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ (currentPage - 1) * pageSize + items.length }} clientes (Página {{ currentPage }})
                 </span>
-                <span *ngIf="totalItems === 0">
+                <span *ngIf="items.length === 0">
                     Nenhum resultado encontrado
                 </span>
             </div>
 
             <!-- Navegação entre páginas -->
-            <div class="flex items-center space-x-2" *ngIf="totalItems > 0">
+            <div class="flex items-center space-x-2" *ngIf="items.length > 0">
                 <!-- Botão para primeira página -->
                 <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1"
                     [ngClass]="{'opacity-50 cursor-not-allowed': currentPage === 1, 'cursor-pointer': currentPage !== 1}"
@@ -102,19 +101,19 @@
 
                 <!-- Indicador de página atual -->
                 <span class="px-3 py-1">
-                    Página {{ currentPage }} de {{ totalPages || 1 }}
+                    Página {{ currentPage }}
                 </span>
 
                 <!-- Botão para próxima página -->
-                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage >= totalPages"
-                    [ngClass]="{'opacity-50 cursor-not-allowed': currentPage >= totalPages, 'cursor-pointer': currentPage < totalPages}"
+                <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="!hasMore"
+                    [ngClass]="{'opacity-50 cursor-not-allowed': !hasMore, 'cursor-pointer': hasMore}"
                     (click)="proximaPagina()">
                     <i class="fa-solid fa-angle-right"></i>
                 </button>
             </div>
 
             <!-- Seletor de itens por página -->
-            <div class="flex items-center space-x-2 mt-2 md:mt-0" *ngIf="totalItems > 0">
+            <div class="flex items-center space-x-2 mt-2 md:mt-0">
                 <span class="text-sm text-gray-600">Itens por página:</span>
                 <select class="border rounded px-2 py-1 text-sm" (change)="alterarTamanhoPagina($event)">
                     <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">

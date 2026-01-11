@@ -18,13 +18,23 @@ export class ClienteService {
 
   constructor(private firestore: Firestore, private auth: Auth) { }
 
+  /**
+   * @deprecated Use buscarClientesPaginadas() para melhor performance
+   * Este método carrega todos os clientes em memória - não recomendado para grandes volumes
+   */
   listarClientes(): Observable<Cliente[]> {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
     try {
       const clientesRef = collection(this.firestore, 'clientes');
-      const q = query(clientesRef, where('empresa_id', '==', user.uid));
+      // Limitar a 100 clientes mais recentes para evitar sobrecarga
+      const q = query(
+        clientesRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('nome'),
+        limit(100)
+      );
       
       return from(getDocs(q)).pipe(
         map(snapshot => {
@@ -38,7 +48,8 @@ export class ClienteService {
               empresa_id: data['empresa_id']
             });
           });
-          return clientes.sort((a, b) => a.nome.localeCompare(b.nome));
+          // Não é necessário sort - query já ordena por nome
+          return clientes;
         })
       );
     } catch (error) {
@@ -139,27 +150,6 @@ export class ClienteService {
 
     const clientesRef = collection(this.firestore, 'clientes');
     
-    // Construir queries com base nos parâmetros
-    let countQuery;
-    if (searchTerm && searchTerm.trim() !== '') {
-      searchTerm = searchTerm.toLocaleUpperCase();
-      const searchTermEnd = searchTerm + '\uf8ff';
-      
-      // Query para contagem com busca por nome (simplificada devido às limitações do Firestore)
-      countQuery = query(
-        clientesRef,
-        where('empresa_id', '==', user.uid),
-        where('nome', '>=', searchTerm),
-        where('nome', '<=', searchTermEnd)
-      );
-    } else {
-      countQuery = query(clientesRef, where('empresa_id', '==', user.uid));
-    }
-    
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
     // Construir a query paginada - ordenar por nome
     let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
@@ -168,6 +158,7 @@ export class ClienteService {
     
     // Adicionar filtros de pesquisa se houver um termo
     if (searchTerm && searchTerm.trim() !== '') {
+      searchTerm = searchTerm.toLocaleUpperCase();
       const searchTermEnd = searchTerm + '\uf8ff';
       // Para busca simples, usar apenas por nome (limitação do Firestore com OR)
       queryConstraints = [
@@ -183,8 +174,8 @@ export class ClienteService {
       queryConstraints.push(startAfter(startAfterDoc));
     }
     
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
+    // Buscar 1 item a mais para saber se há próxima página
+    queryConstraints.push(limit(pageSize + 1));
     
     // Executar a query
     const paginatedQuery = query(clientesRef, ...queryConstraints);
@@ -204,7 +195,19 @@ export class ClienteService {
       lastVisible = doc;
     });
     
-    return { items: clientes, total, lastVisible };
+    // Se trouxe mais que pageSize, há próxima página
+    const hasMore = clientes.length > pageSize;
+    if (hasMore) {
+      clientes.pop(); // Remove o item extra
+      lastVisible = snapshot.docs[snapshot.docs.length - 2];
+    }
+    
+    return { 
+      items: clientes, 
+      total: 0, // Total não é mais calculado para performance
+      lastVisible,
+      hasMore 
+    };
   }
 
   // Método específico para buscar clientes frequentes baseado em lista de nomes
@@ -218,17 +221,6 @@ export class ClienteService {
 
     const clientesRef = collection(this.firestore, 'clientes');
     
-    // Query para contagem total de clientes frequentes
-    const countQuery = query(
-      clientesRef, 
-      where('empresa_id', '==', user.uid),
-      where('nome', 'in', clientesFrequentes)
-    );
-    
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
     // Construir a query paginada para clientes frequentes
     let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
@@ -241,8 +233,8 @@ export class ClienteService {
       queryConstraints.push(startAfter(startAfterDoc));
     }
     
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
+    // Buscar 1 item a mais para saber se há próxima página
+    queryConstraints.push(limit(pageSize + 1));
     
     // Executar a query
     const paginatedQuery = query(clientesRef, ...queryConstraints);
@@ -262,6 +254,18 @@ export class ClienteService {
       lastVisible = doc;
     });
     
-    return { items: clientes, total, lastVisible };
+    // Se trouxe mais que pageSize, há próxima página
+    const hasMore = clientes.length > pageSize;
+    if (hasMore) {
+      clientes.pop(); // Remove o item extra
+      lastVisible = snapshot.docs[snapshot.docs.length - 2];
+    }
+    
+    return { 
+      items: clientes, 
+      total: 0,
+      lastVisible,
+      hasMore 
+    };
   }
 }

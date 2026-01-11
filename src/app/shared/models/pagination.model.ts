@@ -4,6 +4,7 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   lastVisible?: QueryDocumentSnapshot<DocumentData>;
+  hasMore?: boolean; // Indica se há mais páginas sem precisar calcular total
 }
 
 export interface PaginationConfig {

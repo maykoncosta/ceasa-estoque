@@ -20,6 +20,7 @@ export abstract class BaseComponent<T> implements OnInit {
     currentPage: number = 1;
     totalItems: number = 0;
     totalPages: number = 0;
+    hasMore: boolean = false; // Indica se há mais páginas
     pageSizeOptions: number[] = [5, 10, 20, 50];
     lastVisible?: QueryDocumentSnapshot<DocumentData>;
     pageHistory: QueryDocumentSnapshot<DocumentData>[] = [];
@@ -68,7 +69,8 @@ export abstract class BaseComponent<T> implements OnInit {
     ): Promise<{
         items: T[],
         total: number,
-        lastVisible?: QueryDocumentSnapshot<DocumentData>
+        lastVisible?: QueryDocumentSnapshot<DocumentData>,
+        hasMore?: boolean
     }>;
 
     /**
@@ -81,6 +83,7 @@ export abstract class BaseComponent<T> implements OnInit {
             .then(result => {
                 this.items = result.items;
                 this.totalItems = result.total;
+                this.hasMore = result.hasMore ?? false;
                 this.lastVisible = result.lastVisible;
                 this.calcularTotalPaginas();
 
@@ -109,6 +112,7 @@ export abstract class BaseComponent<T> implements OnInit {
                 .then(result => {
                     this.items = result.items;
                     this.totalItems = result.total;
+                    this.hasMore = result.hasMore ?? false;
                     this.lastVisible = result.lastVisible;
                     this.calcularTotalPaginas();
                 })
@@ -129,6 +133,7 @@ export abstract class BaseComponent<T> implements OnInit {
                 .then(async result => {
                     this.items = result.items;
                     this.totalItems = result.total;
+                    this.hasMore = result.hasMore ?? false;
                     this.lastVisible = result.lastVisible;
                     this.calcularTotalPaginas();
                     
@@ -167,7 +172,8 @@ export abstract class BaseComponent<T> implements OnInit {
             const result: {
                 items: T[],
                 total: number,
-                lastVisible?: QueryDocumentSnapshot<DocumentData>
+                lastVisible?: QueryDocumentSnapshot<DocumentData>,
+                hasMore?: boolean
             } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
             
             if (result.lastVisible) {
@@ -180,9 +186,11 @@ export abstract class BaseComponent<T> implements OnInit {
         const finalResult: {
             items: T[],
             total: number,
-            lastVisible?: QueryDocumentSnapshot<DocumentData>
+            lastVisible?: QueryDocumentSnapshot<DocumentData>,
+            hasMore?: boolean
         } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
         this.items = finalResult.items;
+        this.hasMore = finalResult.hasMore ?? false;
         this.lastVisible = finalResult.lastVisible;
         this.currentPage = targetPage;
     }
@@ -215,7 +223,7 @@ export abstract class BaseComponent<T> implements OnInit {
      * Navega para a próxima página
      */
     proximaPagina(): void {
-        if (this.currentPage < this.totalPages && this.lastVisible) {
+        if (this.hasMore && this.lastVisible) {
             this.loaderService.showLoading();
 
             // Armazenar o documento atual no histórico para poder voltar
@@ -226,6 +234,7 @@ export abstract class BaseComponent<T> implements OnInit {
             this.buscarItensPaginados(this.pageSize, this.lastVisible, this.searchTerm)
                 .then(result => {
                     this.items = result.items;
+                    this.hasMore = result.hasMore ?? false;
                     this.lastVisible = result.lastVisible;
                     this.currentPage++;
                 })
@@ -255,6 +264,7 @@ export abstract class BaseComponent<T> implements OnInit {
                 this.buscarItensPaginados(this.pageSize, undefined, this.searchTerm)
                     .then(result => {
                         this.items = result.items;
+                        this.hasMore = result.hasMore ?? false;
                         this.lastVisible = result.lastVisible;
                     })
                     .catch(error => {
@@ -270,6 +280,7 @@ export abstract class BaseComponent<T> implements OnInit {
                 this.buscarItensPaginados(this.pageSize, previousDoc, this.searchTerm)
                     .then(result => {
                         this.items = result.items;
+                        this.hasMore = result.hasMore ?? false;
                         this.lastVisible = result.lastVisible;
                     })
                     .catch(error => {

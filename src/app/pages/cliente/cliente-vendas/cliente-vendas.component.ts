@@ -25,6 +25,7 @@ export class ClienteVendasComponent implements OnInit {
   pageSize: number = 10;
   totalItems: number = 0;
   totalPages: number = 0;
+  hasMore: boolean = false;
   pageSizeOptions: number[] = [5, 10, 20, 50];
   lastVisible?: QueryDocumentSnapshot<DocumentData>;
   
@@ -54,11 +55,13 @@ export class ClienteVendasComponent implements OnInit {
       const result = await this.vendaService.buscarVendasPorCliente(
         this.nomeCliente,
         this.pageSize,
-        this.currentPage === 1 ? undefined : this.lastVisible
+        this.currentPage === 1 ? undefined : this.lastVisible,
+        true // apenasNaoPagas
       );
       
       this.vendas = result.items;
       this.totalItems = result.total;
+      this.hasMore = result.hasMore ?? false;
       this.totalPages = Math.ceil(this.totalItems / this.pageSize);
       this.lastVisible = result.lastVisible;
       
@@ -162,7 +165,7 @@ export class ClienteVendasComponent implements OnInit {
 
   // Métodos de paginação
   async proximaPagina(): Promise<void> {
-    if (this.currentPage < this.totalPages) {
+    if (this.hasMore && this.lastVisible) {
       this.currentPage++;
       await this.carregarVendas();
     }

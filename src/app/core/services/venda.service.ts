@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
-import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData, deleteField } from '@angular/fire/firestore';
+import { addDoc, collection, collectionData, deleteDoc, doc, Firestore, getDocs, getDoc, query, updateDoc, where, orderBy, limit, startAfter, getCountFromServer, QueryDocumentSnapshot, DocumentData, deleteField } from '@angular/fire/firestore';
 import { Observable, of, from, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/shared/models/pagination.model';
 
@@ -33,13 +33,23 @@ export class VendaService {
 
   constructor(private firestore: Firestore, private auth: Auth) { }
 
+  /**
+   * @deprecated Use buscarVendasPaginadas() para melhor performance
+   * Este método carrega todas as vendas em memória - não recomendado para grandes volumes
+   */
   listarVendas(): Observable<Venda[]> {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
     try {
       const vendasRef = collection(this.firestore, 'vendas');
-      const q = query(vendasRef, where('empresa_id', '==', user.uid));
+      // Limitar a 100 vendas mais recentes para evitar sobrecarga
+      const q = query(
+        vendasRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('data', 'desc'),
+        limit(100)
+      );
       
       return from(getDocs(q)).pipe(
         map(snapshot => {
@@ -59,12 +69,8 @@ export class VendaService {
               expandido: false
             });
           });
-          return vendas.sort((a, b) => {
-            // Ordenar por data (mais recente primeiro)
-            const dataA = a.data?.toDate ? a.data.toDate() : new Date(a.data);
-            const dataB = b.data?.toDate ? b.data.toDate() : new Date(b.data);
-            return dataB.getTime() - dataA.getTime();
-          });
+          // Não é necessário sort - query já ordena por data desc
+          return vendas;
         })
       );
     } catch (error) {
@@ -166,7 +172,7 @@ export class VendaService {
     return deleteDoc(vendaDoc);
   }
 
-  // Novo método para busca paginada de vendas
+  // Método para busca paginada de vendas
   async buscarVendasPaginadas(
     pageSize: number, 
     startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
@@ -177,25 +183,6 @@ export class VendaService {
 
     const vendasRef = collection(this.firestore, 'vendas');
     
-    // Construir queries com base nos parâmetros
-    let countQuery;
-    if (searchTerm && searchTerm.trim() !== '') {
-      searchTerm = searchTerm.toLocaleUpperCase();
-      const searchTermEnd = searchTerm + '\uf8ff';
-      countQuery = query(
-        vendasRef, 
-        where('empresa_id', '==', user.uid),
-        where('cliente', '>=', searchTerm),
-        where('cliente', '<=', searchTermEnd)
-      );
-    } else {
-      countQuery = query(vendasRef, where('empresa_id', '==', user.uid));
-    }
-    
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
     // Construir a query paginada - ordenar por data (mais recente primeiro)
     let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
@@ -204,6 +191,7 @@ export class VendaService {
     
     // Adicionar filtros de pesquisa se houver um termo
     if (searchTerm && searchTerm.trim() !== '') {
+      searchTerm = searchTerm.toLocaleUpperCase();
       const searchTermEnd = searchTerm + '\uf8ff';
       // Para pesquisa por cliente, precisamos reordenar por cliente
       queryConstraints = [
@@ -220,8 +208,8 @@ export class VendaService {
       queryConstraints.push(startAfter(startAfterDoc));
     }
     
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
+    // Buscar 1 item a mais para saber se há próxima página
+    queryConstraints.push(limit(pageSize + 1));
     
     // Executar a query
     const paginatedQuery = query(vendasRef, ...queryConstraints);
@@ -240,20 +228,34 @@ export class VendaService {
         lucro_total: data['lucro_total'],
         data: data['data'],
         cliente: data['cliente'],
+        valor_pago: data['valor_pago'],
         observacao: data['observacao'],
         expandido: false
       });
       lastVisible = doc;
     });
     
-    return { items: vendas, total, lastVisible };
+    // Se trouxe mais que pageSize, há próxima página
+    const hasMore = vendas.length > pageSize;
+    if (hasMore) {
+      vendas.pop(); // Remove o item extra
+      lastVisible = snapshot.docs[snapshot.docs.length - 2];
+    }
+    
+    return { 
+      items: vendas, 
+      total: 0, // Total não é mais calculado para performance
+      lastVisible,
+      hasMore 
+    };
   }
 
-  // Método para buscar vendas de um cliente específico (apenas não pagas)
+  // Método para buscar vendas de um cliente específico
   async buscarVendasPorCliente(
     clienteNome: string,
     pageSize: number,
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+    apenasNaoPagas: boolean = false
   ): Promise<PaginatedResult<Venda>> {
     const user = this.auth.currentUser;
     if (!user) return { items: [], total: 0 };
@@ -261,26 +263,35 @@ export class VendaService {
     const vendasRef = collection(this.firestore, 'vendas');
     const clienteUppercase = clienteNome.toLocaleUpperCase();
     
-    // Query base para buscar todas as vendas do cliente
-    const baseQuery = query(
-      vendasRef,
+    // Construir query paginada
+    let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
       where('cliente', '==', clienteUppercase),
       orderBy('data', 'desc')
-    );
+    ];
     
-    const allVendasSnapshot = await getDocs(baseQuery);
+    if (startAfterDoc) {
+      queryConstraints.push(startAfter(startAfterDoc));
+    }
     
-    // Filtrar apenas vendas não pagas (valor_pago < valor_total)
-    const vendasNaoPagas: Venda[] = [];
-    allVendasSnapshot.forEach((doc) => {
+    // Buscar mais itens se filtrarmos por não pagas (para compensar as pagas)
+    const fetchSize = apenasNaoPagas ? pageSize * 3 : pageSize + 1;
+    queryConstraints.push(limit(fetchSize));
+    
+    const paginatedQuery = query(vendasRef, ...queryConstraints);
+    const snapshot = await getDocs(paginatedQuery);
+    
+    const vendas: Venda[] = [];
+    let lastVisible: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
+    
+    snapshot.forEach((doc) => {
       const data = doc.data();
       const valorPago = data['valor_pago'] || 0;
       const valorTotal = data['valor_total'];
       
-      // Incluir apenas vendas não totalmente pagas
-      if (valorPago < valorTotal) {
-        vendasNaoPagas.push({
+      // Se filtrar apenas não pagas, verificar condição
+      if (!apenasNaoPagas || valorPago < valorTotal) {
+        vendas.push({
           id: doc.id,
           empresa_id: data['empresa_id'],
           produtos: data['produtos'],
@@ -292,23 +303,25 @@ export class VendaService {
           observacao: data['observacao'],
           expandido: false
         });
+        lastVisible = doc;
       }
     });
     
-    const total = vendasNaoPagas.length;
+    // Limitar ao pageSize se necessário
+    const hasMore = vendas.length > pageSize;
+    if (hasMore && !apenasNaoPagas) {
+      vendas.splice(pageSize);
+      lastVisible = snapshot.docs[pageSize - 1];
+    } else if (apenasNaoPagas && vendas.length > pageSize) {
+      vendas.splice(pageSize);
+    }
     
-    // Aplicar paginação manualmente
-    const startIndex = startAfterDoc ? 
-      vendasNaoPagas.findIndex(v => v.id === startAfterDoc.id) + 1 : 0;
-    const endIndex = startIndex + pageSize;
-    const vendasPaginadas = vendasNaoPagas.slice(startIndex, endIndex);
-    
-    // Criar um lastVisible simulado para manter compatibilidade
-    const lastVisible = vendasPaginadas.length > 0 ? 
-      allVendasSnapshot.docs.find(doc => doc.id === vendasPaginadas[vendasPaginadas.length - 1].id) : 
-      undefined;
-    
-    return { items: vendasPaginadas, total, lastVisible };
+    return { 
+      items: vendas, 
+      total: 0,
+      lastVisible,
+      hasMore: apenasNaoPagas ? false : hasMore
+    };
   }
 
   // Método para buscar uma venda específica por ID
@@ -316,15 +329,37 @@ export class VendaService {
     const user = this.auth.currentUser;
     if (!user) return null;
 
-    const vendasRef = collection(this.firestore, 'vendas');
-    const q = query(vendasRef, where('empresa_id', '==', user.uid));
-    const querySnapshot = await getDocs(q);
-    
-    const venda = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as Venda))
-      .find(v => v.id === id);
-    
-    return venda || null;
+    try {
+      const vendaDoc = doc(this.firestore, 'vendas', id);
+      const vendaSnapshot = await getDoc(vendaDoc);
+      
+      if (!vendaSnapshot.exists()) {
+        return null;
+      }
+      
+      const data = vendaSnapshot.data();
+      
+      // Verificar se pertence à empresa do usuário
+      if (data['empresa_id'] !== user.uid) {
+        return null;
+      }
+      
+      return {
+        id: vendaSnapshot.id,
+        empresa_id: data['empresa_id'],
+        produtos: data['produtos'],
+        valor_total: data['valor_total'],
+        lucro_total: data['lucro_total'],
+        data: data['data'],
+        cliente: data['cliente'],
+        valor_pago: data['valor_pago'],
+        observacao: data['observacao'],
+        expandido: false
+      };
+    } catch (error) {
+      console.error('Erro ao buscar venda por ID:', error);
+      return null;
+    }
   }
 
   // Método para atualizar valor pago de uma venda

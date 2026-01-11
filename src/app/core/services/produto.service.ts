@@ -34,14 +34,23 @@ export class ProdutoService {
 
   constructor(private firestore: Firestore, private auth: Auth) { }
 
-  // Método original para compatibilidade
+  /**
+   * @deprecated Use buscarProdutosPaginados() para melhor performance
+   * Este método carrega todos os produtos em memória - não recomendado para grandes volumes
+   */
   listarProdutos(): Observable<Produto[]> {
     const user = this.auth.currentUser;
     if (!user) return of([]);
 
     try {
       const produtosRef = collection(this.firestore, 'produtos');
-      const q = query(produtosRef, where('empresa_id', '==', user.uid));
+      // Limitar a 100 produtos mais recentes para evitar sobrecarga
+      const q = query(
+        produtosRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('nome'),
+        limit(100)
+      );
       
       return from(getDocs(q)).pipe(
         map(snapshot => {
@@ -58,7 +67,8 @@ export class ProdutoService {
               unidadeMedida: data['unidadeMedida']
             });
           });
-          return produtos.sort((a, b) => a.nome.localeCompare(b.nome));
+          // Não é necessário sort - query já ordena por nome
+          return produtos;
         })
       );
     } catch (error) {
@@ -145,27 +155,6 @@ export class ProdutoService {
 
     const produtosRef = collection(this.firestore, 'produtos');
     
-    // Construir queries com base nos parâmetros
-    let countQuery;
-    if (searchTerm && searchTerm.trim() !== '') {
-      searchTerm = searchTerm.toLocaleUpperCase();
-      // Firebase não suporta busca LIKE nativa, então usamos >= e <= para simular
-      // Isso vai buscar nomes que começam com o termo de busca
-      const searchTermEnd = searchTerm + '\uf8ff';
-      countQuery = query(
-        produtosRef, 
-        where('empresa_id', '==', user.uid),
-        where('nome', '>=', searchTerm),
-        where('nome', '<=', searchTermEnd)
-      );
-    } else {
-      countQuery = query(produtosRef, where('empresa_id', '==', user.uid));
-    }
-    
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
-    
     // Construir a query paginada
     let queryConstraints: any[] = [
       where('empresa_id', '==', user.uid),
@@ -174,6 +163,7 @@ export class ProdutoService {
     
     // Adicionar filtros de pesquisa se houver um termo
     if (searchTerm && searchTerm.trim() !== '') {
+      searchTerm = searchTerm.toLocaleUpperCase();
       const searchTermEnd = searchTerm + '\uf8ff';
       queryConstraints.push(where('nome', '>=', searchTerm));
       queryConstraints.push(where('nome', '<=', searchTermEnd));
@@ -184,8 +174,8 @@ export class ProdutoService {
       queryConstraints.push(startAfter(startAfterDoc));
     }
     
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
+    // Buscar 1 item a mais para saber se há próxima página
+    queryConstraints.push(limit(pageSize + 1));
     
     // Executar a query
     const paginatedQuery = query(produtosRef, ...queryConstraints);
@@ -208,7 +198,19 @@ export class ProdutoService {
       lastVisible = doc;
     });
     
-    return { items: produtos, total, lastVisible };
+    // Se trouxe mais que pageSize, há próxima página
+    const hasMore = produtos.length > pageSize;
+    if (hasMore) {
+      produtos.pop(); // Remove o item extra
+      lastVisible = snapshot.docs[snapshot.docs.length - 2];
+    }
+    
+    return { 
+      items: produtos, 
+      total: 0, // Total não é mais calculado para performance
+      lastVisible,
+      hasMore 
+    };
   }
 
   // Método específico para buscar produtos com baixo estoque (< 10 unidades)
@@ -220,17 +222,6 @@ export class ProdutoService {
     if (!user) return { items: [], total: 0 };
 
     const produtosRef = collection(this.firestore, 'produtos');
-    
-    // Query para contagem total de produtos com baixo estoque
-    const countQuery = query(
-      produtosRef, 
-      where('empresa_id', '==', user.uid),
-      where('estoque', '<', 10)
-    );
-    
-    // Obter contagem total
-    const countSnapshot = await getCountFromServer(countQuery);
-    const total = countSnapshot.data().count;
     
     // Construir a query paginada para produtos com baixo estoque
     let queryConstraints: any[] = [
@@ -245,8 +236,8 @@ export class ProdutoService {
       queryConstraints.push(startAfter(startAfterDoc));
     }
     
-    // Adicionar limitação de página
-    queryConstraints.push(limit(pageSize));
+    // Buscar 1 item a mais para saber se há próxima página
+    queryConstraints.push(limit(pageSize + 1));
     
     // Executar a query
     const paginatedQuery = query(produtosRef, ...queryConstraints);
@@ -269,7 +260,19 @@ export class ProdutoService {
       lastVisible = doc;
     });
     
-    return { items: produtos, total, lastVisible };
+    // Se trouxe mais que pageSize, há próxima página
+    const hasMore = produtos.length > pageSize;
+    if (hasMore) {
+      produtos.pop(); // Remove o item extra
+      lastVisible = snapshot.docs[snapshot.docs.length - 2];
+    }
+    
+    return { 
+      items: produtos, 
+      total: 0, // Total não é mais calculado para performance
+      lastVisible,
+      hasMore 
+    };
   }
 
   adicionarProduto(produto: Produto) {

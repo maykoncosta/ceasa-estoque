@@ -139,13 +139,13 @@
 
                 <!-- Indicador de página atual -->
                 <span class="px-3 py-1">
-                    Página {{ currentPage }} de {{ totalPages || 1 }}
+                    Página {{ currentPage }}
                 </span>
 
                 <!-- Botão para próxima página -->
                 <button class="px-3 py-1 border rounded hover:bg-gray-100" 
-                        [disabled]="currentPage >= totalPages"
-                        [ngClass]="{'opacity-50 cursor-not-allowed': currentPage >= totalPages, 'cursor-pointer': currentPage < totalPages}"
+                        [disabled]="!hasMore"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': !hasMore, 'cursor-pointer': hasMore}"
                         (click)="proximaPagina()">
                     <i class="fa-solid fa-angle-right"></i>
                 </button>

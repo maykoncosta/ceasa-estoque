@@ -194,11 +194,14 @@
             <!-- Seletor de itens por página -->
             <div class="flex items-center space-x-2 mt-2 md:mt-0">
                 <span class="text-sm text-gray-600">Itens por página:</span>
-                <select class="border rounded px-2 py-1 text-sm" (change)="alterarTamanhoPagina($event)">
-                    <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">
-                        {{ size }}
-                    </option>
-                </select>
+                <div class="relative">
+                    <select class="enhanced-select border rounded px-2 py-1 pr-8 text-sm appearance-none cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" (change)="alterarTamanhoPagina($event)">
+                        <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="pageSize === size">
+                            {{ size }}
+                        </option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                </div>
             </div>
         </div>
     </div>

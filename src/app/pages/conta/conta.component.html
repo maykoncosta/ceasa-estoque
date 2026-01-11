@@ -173,16 +173,21 @@
           </div>
           <div class="form-group col-4">
             <label for="estado">Estado *</label>
-            <select 
-              id="estado"
-              formControlName="estado"
-              class="form-control"
-              [class.error]="enderecoForm.get('estado')?.invalid && enderecoForm.get('estado')?.touched">
-              <option value="">Selecione</option>
-              <option *ngFor="let estado of estadosBrasil" [value]="estado.sigla">
-                {{ estado.sigla }} - {{ estado.nome }}
-              </option>
-            </select>
+            <div class="relative">
+              <select 
+                id="estado"
+                formControlName="estado"
+                class="enhanced-select form-control appearance-none cursor-pointer pr-8 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                [class.error]="enderecoForm.get('estado')?.invalid && enderecoForm.get('estado')?.touched"
+                [class.border-l-4]="enderecoForm.get('estado')?.invalid && enderecoForm.get('estado')?.touched"
+                [class.border-l-red-500]="enderecoForm.get('estado')?.invalid && enderecoForm.get('estado')?.touched">
+                <option value="">Selecione o estado...</option>
+                <option *ngFor="let estado of estadosBrasil" [value]="estado.sigla">
+                  {{ estado.sigla }} - {{ estado.nome }}
+                </option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
           </div>
         </div>
 
@@ -363,18 +368,24 @@
         <div class="form-row">
           <div class="form-group col-6">
             <label for="formato_data">Formato de Data</label>
-            <select id="formato_data" formControlName="formato_data" class="form-control">
-              <option value="DD/MM/YYYY">DD/MM/YYYY (Brasileiro)</option>
-              <option value="MM/DD/YYYY">MM/DD/YYYY (Americano)</option>
-            </select>
+            <div class="relative">
+              <select id="formato_data" formControlName="formato_data" class="enhanced-select form-control appearance-none cursor-pointer pr-8 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="DD/MM/YYYY">DD/MM/YYYY (Brasileiro)</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY (Americano)</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
           </div>
           <div class="form-group col-6">
             <label for="moeda">Moeda</label>
-            <select id="moeda" formControlName="moeda" class="form-control">
-              <option value="BRL">Real (R$)</option>
-              <option value="USD">Dólar ($)</option>
-              <option value="EUR">Euro (€)</option>
-            </select>
+            <div class="relative">
+              <select id="moeda" formControlName="moeda" class="enhanced-select form-control appearance-none cursor-pointer pr-8 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="BRL">Real (R$)</option>
+                <option value="USD">Dólar ($)</option>
+                <option value="EUR">Euro (€)</option>
+              </select>
+              <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
           </div>
         </div>
 

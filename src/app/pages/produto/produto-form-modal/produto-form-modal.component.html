@@ -49,12 +49,23 @@
                     class="text-red-500 mt-1">Preço de venda é obrigatório</small>
             </div>
             <div class="flex flex-col col-span-4 md:col-span-2">
-                <label for="unidadeMedida">Unidade de Medida</label>
-                <select id="dropdown" class="mt-2 border border-gray-300 rounded-md px-3 py-2"
-                    formControlName="unidadeMedida"
-                    [ngClass]="{'bg-red-50 border-l-4 border-l-red-500 focus:bg-red-25 focus:outline-red-500': hasFieldError(form, 'unidadeMedida', 'required', profileForm)}">
-                    <option *ngFor="let unidade of unidades" [value]="unidade.nome" required>{{ unidade.nome }}</option>
-                </select>
+                <label for="unidadeMedida" class="font-medium text-gray-700 mb-1">Unidade de Medida</label>
+                <div class="relative">
+                    <select 
+                        id="unidadeMedida" 
+                        class="enhanced-select w-full appearance-none mt-2 border border-gray-300 rounded-md px-3 py-2.5 pr-10 bg-white cursor-pointer
+                               hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none
+                               transition-all duration-200 text-gray-900"
+                        formControlName="unidadeMedida"
+                        [ngClass]="{'bg-red-50 border-l-4 border-l-red-500 focus:ring-red-200 focus:border-red-500': hasFieldError(form, 'unidadeMedida', 'required', profileForm)}"
+                        required>
+                        <option value="" disabled selected hidden>Selecione a unidade...</option>
+                        <option *ngFor="let unidade of unidades" [value]="unidade.nome">{{ unidade.nome }}</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none mt-2">
+                        <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                    </div>
+                </div>
                 <small *ngIf="hasFieldError(form, 'unidadeMedida', 'required', profileForm)"
                     class="text-red-500 mt-1">Unidade de medida é obrigatória</small>
             </div>

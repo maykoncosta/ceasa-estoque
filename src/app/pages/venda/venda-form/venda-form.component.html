@@ -34,6 +34,7 @@
                             id="cliente" 
                             formControlName="cliente" 
                             (input)="onClienteInputChange($event)"
+                            (keydown)="onClienteKeyDown($event)"
                             (focus)="onClienteFocus()"
                             (blur)="onClienteBlur()"
                             placeholder="Digite o nome do cliente (cadastrado ou não)..."
@@ -43,9 +44,12 @@
                           <!-- Dropdown com sugestões de clientes -->
                         <div *ngIf="showClienteDropdown" 
                             class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                            <div *ngFor="let cliente of clientesFiltrados" 
+                            <div *ngFor="let cliente of clientesFiltrados; let i = index" 
                                 (click)="selecionarCliente(cliente)"
-                                class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                class="cliente-dropdown-item px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                [class.active]="i === clienteActiveIndex"
+                                [class.bg-blue-100]="i === clienteActiveIndex"
+                                [class.font-medium]="i === clienteActiveIndex">
                                 <div class="flex justify-between items-center">
                                     <span class="font-medium">{{ cliente.nome }}</span>
                                     <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Cadastrado</span>
@@ -103,6 +107,7 @@
                                 id="produto" 
                                 formControlName="produto" 
                                 (input)="onProdutoInputChange($event)"
+                                (keydown)="onProdutoKeyDown($event)"
                                 (focus)="onProdutoFocus()"
                                 (blur)="onProdutoBlur()"
                                 placeholder="Digite o nome do produto..."
@@ -112,9 +117,12 @@
                             <!-- Dropdown com sugestões -->
                             <div *ngIf="showDropdown" 
                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                <div *ngFor="let produto of produtosFiltrados" 
+                                <div *ngFor="let produto of produtosFiltrados; let i = index" 
                                     (click)="selecionarProduto(produto)"
-                                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                    class="produto-dropdown-item px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                                    [class.active]="i === produtoActiveIndex"
+                                    [class.bg-blue-100]="i === produtoActiveIndex"
+                                    [class.font-medium]="i === produtoActiveIndex">
                                     <div class="flex justify-between items-center">
                                         <span class="font-medium">{{ produto.nome }}</span>
                                         <span class="text-sm text-gray-500">Estoque: {{ produto.estoque }}</span>

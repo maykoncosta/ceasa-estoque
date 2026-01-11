@@ -31,11 +31,13 @@ export class VendaFormComponent implements OnInit {
   produtosFiltrados: Produto[] = [];
   showDropdown = false;
   produtoSelecionado: Produto | null = null;
+  produtoActiveIndex = -1;
 
   // Autocomplete vars para clientes
   clientesFiltrados: Cliente[] = [];
   showClienteDropdown = false;
   clienteSelecionado: Cliente | null = null;
+  clienteActiveIndex = -1;
 
   constructor(
     private router: Router,
@@ -179,16 +181,58 @@ export class VendaFormComponent implements OnInit {
         produto.nome.toLowerCase().includes(valor.toLowerCase())
       ).slice(0, 10); // Limitar a 10 resultados para performance
       this.showDropdown = this.produtosFiltrados.length > 0;
+      this.produtoActiveIndex = -1;
     } else {
       this.produtosFiltrados = [];
       this.showDropdown = false;
       this.produtoSelecionado = null;
+      this.produtoActiveIndex = -1;
       this.limparCamposProduto();
     }
-  } selecionarProduto(produto: Produto): void {
+  }
+
+  onProdutoKeyDown(event: KeyboardEvent): void {
+    if (!this.showDropdown) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.produtoActiveIndex = Math.min(this.produtoActiveIndex + 1, this.produtosFiltrados.length - 1);
+        this.scrollToActiveProduto();
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.produtoActiveIndex = Math.max(this.produtoActiveIndex - 1, 0);
+        this.scrollToActiveProduto();
+        break;
+      case 'Enter':
+        event.preventDefault();
+        if (this.produtoActiveIndex >= 0 && this.produtoActiveIndex < this.produtosFiltrados.length) {
+          this.selecionarProduto(this.produtosFiltrados[this.produtoActiveIndex]);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.showDropdown = false;
+        this.produtoActiveIndex = -1;
+        break;
+    }
+  }
+
+  private scrollToActiveProduto(): void {
+    setTimeout(() => {
+      const activeElement = document.querySelector('.produto-dropdown-item.active');
+      if (activeElement) {
+        activeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  }
+
+  selecionarProduto(produto: Produto): void {
     this.produtoSelecionado = produto;
     this.formProdutos.get('produto')?.setValue(produto.nome);
     this.showDropdown = false;
+    this.produtoActiveIndex = -1;
 
     // Preencher dados automaticamente
     this.formProdutos.get('preco')?.setValue(produto.preco_venda);
@@ -527,23 +571,64 @@ export class VendaFormComponent implements OnInit {
         cliente.nome.toLowerCase().includes(valor.toLowerCase())
       ).slice(0, 10); // Limitar a 10 resultados para performance
       this.showClienteDropdown = this.clientesFiltrados.length > 0;
+      this.clienteActiveIndex = -1;
     } else {
       this.clientesFiltrados = [];
       this.showClienteDropdown = false;
       this.clienteSelecionado = null;
+      this.clienteActiveIndex = -1;
     }
+  }
+
+  onClienteKeyDown(event: KeyboardEvent): void {
+    if (!this.showClienteDropdown) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.clienteActiveIndex = Math.min(this.clienteActiveIndex + 1, this.clientesFiltrados.length - 1);
+        this.scrollToActiveCliente();
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.clienteActiveIndex = Math.max(this.clienteActiveIndex - 1, 0);
+        this.scrollToActiveCliente();
+        break;
+      case 'Enter':
+        event.preventDefault();
+        if (this.clienteActiveIndex >= 0 && this.clienteActiveIndex < this.clientesFiltrados.length) {
+          this.selecionarCliente(this.clientesFiltrados[this.clienteActiveIndex]);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.showClienteDropdown = false;
+        this.clienteActiveIndex = -1;
+        break;
+    }
+  }
+
+  private scrollToActiveCliente(): void {
+    setTimeout(() => {
+      const activeElement = document.querySelector('.cliente-dropdown-item.active');
+      if (activeElement) {
+        activeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
   }
 
   selecionarCliente(cliente: Cliente): void {
     this.clienteSelecionado = cliente;
     this.form.get('cliente')?.setValue(cliente.nome);
     this.showClienteDropdown = false;
+    this.clienteActiveIndex = -1;
   }
 
   onClienteBlur(): void {
     // Delay para permitir clique na opção
     setTimeout(() => {
       this.showClienteDropdown = false;
+      this.clienteActiveIndex = -1;
     }, 200);
   }
 

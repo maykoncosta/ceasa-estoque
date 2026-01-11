@@ -36,3 +36,40 @@ input, select{
 .body-bg{
     background-color: #eaedf0;
 }
+/* Enhanced Select Styles */
+.enhanced-select {
+    background-color: white !important;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.enhanced-select:focus {
+    background-color: white !important;
+}
+
+.enhanced-select option {
+    padding: 8px 12px;
+    background-color: white;
+    color: #111827;
+    font-size: 0.9375rem;
+}
+
+.enhanced-select option:hover,
+.enhanced-select option:focus,
+.enhanced-select option:checked {
+    background-color: #dbeafe !important;
+    background: linear-gradient(0deg, #dbeafe 0%, #dbeafe 100%);
+    color: #1e40af;
+    font-weight: 500;
+}
+
+.enhanced-select option:disabled {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.enhanced-select:focus option:checked {
+    background-color: #3b82f6 !important;
+    background: linear-gradient(0deg, #3b82f6 0%, #3b82f6 100%);
+    color: white;
+}

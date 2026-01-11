@@ -374,6 +374,15 @@ export class VendaFormComponent implements OnInit {
     });
     this.produtoSelecionado = null;
     this.showDropdown = false;
+    this.produtoActiveIndex = -1;
+
+    // Focar no campo produto para adicionar outro
+    setTimeout(() => {
+      const produtoInput = document.getElementById('produto');
+      if (produtoInput) {
+        produtoInput.focus();
+      }
+    }, 100);
   }
 
   removerProduto(index: number): void {

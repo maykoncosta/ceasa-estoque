@@ -2,39 +2,55 @@
     <app-loader></app-loader>
     <app-message></app-message>
 
-    <header class="flex items-center justify-between text-white p-2 md:p-4
-    lg:p-4 shadow-md">
-        <button *ngIf="user$ | async" (click)="toggleSidebar()" class="p-2">
-            <i class="fa-solid fa-bars w-8"></i>
-        </button>
-        <h2 *ngIf="!(user$ | async)"></h2>
-        
-        <!-- Informações da Empresa -->
-        <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
-             (click)="navegarParaDashboard()">
-          <!-- Logo da empresa (se disponível) -->
-          <img 
-            *ngIf="logoEmpresa" 
-            [src]="logoEmpresa" 
-            [alt]="nomeEmpresa"
-            class="w-8 h-8 rounded-full object-cover border border-white/20">
-          
-          <!-- Nome da empresa -->
-          <div class="flex flex-col">
-            <h1 class="text-lg font-bold">{{ nomeEmpresa }}</h1>
-            <!-- Status da empresa (apenas se inativa) -->
-            <span 
-              *ngIf="!empresaAtiva" 
-              class="text-xs text-red-200 font-medium">
-              Conta Inativa
-            </span>
-          </div>
-        </div>
+    <header class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl border-b border-blue-700">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Botão Menu (Mobile/Desktop) -->
+            <button 
+                *ngIf="user$ | async" 
+                (click)="toggleSidebar()" 
+                class="p-2 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            <div *ngIf="!(user$ | async)" class="w-10"></div>
+            
+            <!-- Informações da Empresa (Centro) -->
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-blue-700/30 px-4 py-2 rounded-lg transition-all duration-200" 
+                 (click)="navegarParaDashboard()">
+              <!-- Logo da empresa (se disponível) -->
+              <div class="flex items-center justify-center w-10 h-10 rounded-full" 
+                   [class.bg-blue-500]="!logoEmpresa">
+                <img 
+                  *ngIf="logoEmpresa" 
+                  [src]="logoEmpresa" 
+                  [alt]="nomeEmpresa"
+                  class="w-10 h-10 rounded-full object-cover border-2 border-blue-400 shadow-lg">
+                <i *ngIf="!logoEmpresa" class="fa-solid fa-store text-white text-lg"></i>
+              </div>
+              
+              <!-- Nome da empresa -->
+              <div class="flex flex-col">
+                <h1 class="text-lg font-bold tracking-wide">{{ nomeEmpresa }}</h1>
+                <!-- Status da empresa (apenas se inativa) -->
+                <div class="flex items-center gap-2">
+                  <span 
+                    *ngIf="empresaAtiva" 
+                    class="text-xs text-green-300 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check text-[10px]"></i>
+                    Ativa
+                  </span>
+                  <span 
+                    *ngIf="!empresaAtiva" 
+                    class="text-xs text-red-300 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                    Inativa
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        <button class="background" *ngIf="user$ | async" (click)="logout()" class="p-2 md:min-w-16 ">
-            <i class="fa-solid fa-right-from-bracket w-8"></i>
-        </button>
-        <h2 *ngIf="!(user$ | async)"></h2>
+            <!-- Espaço vazio para manter simetria -->
+            <div class="w-10"></div>
+        </div>
     </header>
     <div class="flex flex-1 overflow-hidden">
         <app-sidebar *ngIf="!sidebarOpen"></app-sidebar>

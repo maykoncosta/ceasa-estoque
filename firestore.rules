@@ -25,5 +25,19 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
     }
 
+    // Estatísticas Diárias - Apenas leitura para usuários, escrita apenas via Cloud Functions
+    match /estatisticas_diarias/{estatisticaId} {
+      allow read: if request.auth != null && 
+                     resource.data.empresa_id == request.auth.uid;
+      allow write: if false; // Apenas Cloud Functions podem escrever
+    }
+
+    // Estatísticas Mensais - Apenas leitura para usuários, escrita apenas via Cloud Functions
+    match /estatisticas_mensais/{estatisticaId} {
+      allow read: if request.auth != null && 
+                     resource.data.empresa_id == request.auth.uid;
+      allow write: if false; // Apenas Cloud Functions podem escrever
+    }
+
   }
 }

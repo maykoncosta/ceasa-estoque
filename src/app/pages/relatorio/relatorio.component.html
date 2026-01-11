@@ -6,13 +6,13 @@
         <div class="bg-blue-50 p-4 rounded-md shadow-sm mb-6">
             <form [formGroup]="form" class="flex flex-col sm:flex-row items-end gap-4">
                 <div class="flex flex-col">
-                    <label for="dataInicial" class="mb-1 text-sm font-medium">Data Inicial</label>
-                    <input type="date" id="dataInicial" formControlName="dataInicial"
+                    <label for="mesInicial" class="mb-1 text-sm font-medium">Mês Inicial</label>
+                    <input type="month" id="mesInicial" formControlName="mesInicial"
                         class="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <div class="flex flex-col">
-                    <label for="dataFinal" class="mb-1 text-sm font-medium">Data Final</label>
-                    <input type="date" id="dataFinal" formControlName="dataFinal"
+                    <label for="mesFinal" class="mb-1 text-sm font-medium">Mês Final</label>
+                    <input type="month" id="mesFinal" formControlName="mesFinal"
                         class="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <button type="button" (click)="gerarRelatorio()" 
@@ -172,6 +172,7 @@
                     <thead>
                         <tr class="bg-blue-100">
                             <th class="p-2 text-left text-sm font-medium">Data</th>
+                            <th class="p-2 text-right text-sm font-medium">Quantidade</th>
                             <th class="p-2 text-right text-sm font-medium">Valor Total</th>
                         </tr>
                     </thead>
@@ -179,12 +180,13 @@
                         <ng-container *ngIf="resumo.vendas_por_dia.length > 0; else semVendas">
                             <tr *ngFor="let venda of resumo.vendas_por_dia" class="border-b hover:bg-gray-50">
                                 <td class="p-2 text-sm">{{formatarDataParaExibicao(venda.data)}}</td>
+                                <td class="p-2 text-sm text-right">{{venda.quantidade}}</td>
                                 <td class="p-2 text-sm text-right">{{formatarMoeda(venda.valor)}}</td>
                             </tr>
                         </ng-container>
                         <ng-template #semVendas>
                             <tr>
-                                <td colspan="2" class="p-4 text-center text-gray-500">
+                                <td colspan="3" class="p-4 text-center text-gray-500">
                                     Nenhuma venda no período selecionado
                                 </td>
                             </tr>
@@ -193,6 +195,7 @@
                     <tfoot>
                         <tr class="bg-gray-50 font-medium">
                             <td class="p-2 text-sm">Total Geral</td>
+                            <td class="p-2 text-sm text-right">{{resumo.total_vendas}}</td>
                             <td class="p-2 text-sm text-right">{{formatarMoeda(resumo.valor_total)}}</td>
                         </tr>
                     </tfoot>

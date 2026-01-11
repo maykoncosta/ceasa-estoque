@@ -33,7 +33,6 @@ export class ContaComponent implements OnInit, OnDestroy {
 
   // Data
   empresa: Empresa | null = null;
-  estatisticas: EstatisticasEmpresa | null = null;
   estadosBrasil = ESTADOS_BRASIL;
   coresPredefinidas = CORES_PREDEFINIDAS;
 
@@ -64,7 +63,6 @@ export class ContaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadEmpresa();
-    this.loadEstatisticas();
     this.setupFormWatchers(); // Reativado apenas para busca de CEP
   }
 
@@ -143,19 +141,6 @@ export class ContaComponent implements OnInit, OnDestroy {
         this.messageService.error('Erro ao carregar dados da empresa');
         this.loading = false;
         this.loaderService.closeLoading();
-      }
-    });
-  }
-
-  private loadEstatisticas(): void {
-    this.empresaService.obterEstatisticas().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (stats) => {
-        this.estatisticas = stats;
-      },
-      error: (error) => {
-        console.error('Erro ao carregar estatísticas:', error);
       }
     });
   }

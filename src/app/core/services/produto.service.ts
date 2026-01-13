@@ -31,6 +31,9 @@ export interface AjusteEstoque {
   providedIn: 'root'
 })
 export class ProdutoService {
+  // Cache estático que persiste entre navegações
+  private cacheEmpresaId: string | null = null;
+  private cacheProdutos: Produto[] = [];
 
   constructor(private firestore: Firestore, private auth: Auth) { }
 
@@ -75,6 +78,70 @@ export class ProdutoService {
       console.error('Erro ao criar query de produtos:', error);
       return of([]);
     }
+  }
+
+  /**
+   * Busca TODOS os produtos para cache local (autocomplete, etc)
+   * Use apenas para volumes pequenos (< 500 registros)
+   * Mantém cache em memória que persiste entre navegações
+   */
+  buscarTodosProdutosParaCache(forcarReload: boolean = false): Observable<Produto[]> {
+    const user = this.auth.currentUser;
+    if (!user) return of([]);
+
+    // Verificar se já tem cache válido
+    if (!forcarReload && this.cacheProdutos.length > 0 && this.cacheEmpresaId === user.uid) {
+      console.log(`⚡ Produtos já em CACHE (serviço): ${this.cacheProdutos.length} produtos`);
+      return of(this.cacheProdutos);
+    }
+
+    console.log('💾 Buscando produtos do BANCO...');
+    try {
+      const produtosRef = collection(this.firestore, 'produtos');
+      const q = query(
+        produtosRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('nome')
+        // SEM LIMIT - busca todos
+      );
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const produtos: Produto[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            produtos.push({
+              id: doc.id,
+              empresa_id: data['empresa_id'],
+              nome: data['nome'],
+              preco_compra: data['preco_compra'],
+              preco_venda: data['preco_venda'],
+              estoque: data['estoque'],
+              unidadeMedida: data['unidadeMedida']
+            });
+          });
+          
+          // Armazenar no cache
+          this.cacheProdutos = produtos;
+          this.cacheEmpresaId = user.uid;
+          console.log(`✅ Cache de produtos atualizado: ${produtos.length} produtos`);
+          
+          return produtos;
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao buscar produtos para cache:', error);
+      return of([]);
+    }
+  }
+  
+  /**
+   * Limpa o cache de produtos (força recarregamento na próxima busca)
+   */
+  limparCache(): void {
+    this.cacheProdutos = [];
+    this.cacheEmpresaId = null;
+    console.log('🗑️ Cache de produtos limpo');
   }
 
   // Método com paginação

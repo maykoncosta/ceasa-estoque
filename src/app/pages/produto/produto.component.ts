@@ -32,6 +32,10 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   // Filtros específicos
   filtroAtivo: string | null = null;
   produtosMaisVendidosIds: string[] = [];
+  
+  // Cache completo de produtos
+  produtosCache: Produto[] = [];
+  produtosFiltrados: Produto[] = [];
     constructor(
     messageService: MessageService,
     loaderService: LoaderService,
@@ -56,20 +60,94 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.unidadeService.listarUnidades().subscribe(data => {
       this.unidades = data;
     });
+    
+    // Buscar produtos (o cache está no serviço, não no componente)
+    this.produtoService.buscarTodosProdutosParaCache().subscribe({
+      next: (data) => {
+        this.produtosCache = data;
+        this.produtosFiltrados = data;
+        this.totalItems = data.length;
+        
+        // Atualizar paginação local
+        this.atualizarPaginacaoLocal();
+        this.loaderService.closeLoading();
+      },
+      error: (error) => {
+        console.error('Erro ao carregar produtos:', error);
+        this.messageService.error('Erro ao carregar produtos');
+        this.loaderService.closeLoading();
+      }
+    });
   }
-  // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
+  // Paginação local em memória
   override async buscarItensPaginados(
     pageSize: number, 
     startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
     searchTerm?: string
   ) {
-    // Se há filtro de baixo estoque ativo, usar o método específico
-    if (this.filtroAtivo === 'baixo-estoque') {
-      return this.produtoService.buscarProdutosBaixoEstoquePaginados(pageSize, startAfterDoc);
+    // Não usado mais - mantido por compatibilidade
+    return { items: [], total: 0 };
+  }
+  
+  // Atualizar paginação local
+  atualizarPaginacaoLocal(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.items = this.produtosFiltrados.slice(startIndex, endIndex);
+    this.totalItems = this.produtosFiltrados.length;
+    this.totalPages = Math.ceil(this.produtosFiltrados.length / this.pageSize);
+    this.hasMore = this.currentPage < this.totalPages;
+  }
+  
+  // Sobrescrever método de busca
+  override async buscarPorTermo(termo: string): Promise<void> {
+    this.searchTerm = termo;
+    
+    if (!termo || termo.trim() === '') {
+      this.produtosFiltrados = this.produtosCache;
+    } else {
+      const termoUpper = termo.toLocaleUpperCase();
+      this.produtosFiltrados = this.produtosCache.filter(produto =>
+        produto.nome.toLocaleUpperCase().includes(termoUpper)
+      );
     }
     
-    // Caso contrário, usar o método padrão
-    return this.produtoService.buscarProdutosPaginados(pageSize, startAfterDoc, searchTerm);
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  // Sobrescrever limpar busca
+  override limparBusca(): void {
+    this.searchTerm = '';
+    this.produtosFiltrados = this.produtosCache;
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  // Sobrescrever navegação de páginas
+  override proximaPagina(): void {
+    const totalPages = Math.ceil(this.produtosFiltrados.length / this.pageSize);
+    if (this.currentPage < totalPages) {
+      this.currentPage++;
+      this.atualizarPaginacaoLocal();
+    }
+  }
+  
+  override paginaAnterior(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.atualizarPaginacaoLocal();
+    }
+  }
+  
+  override primeiraPagina(): void {
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
   }
 
   // Método para listagem simples (sem paginação) - mantido para compatibilidade
@@ -86,7 +164,19 @@ export class ProdutoComponent extends BaseComponent<Produto> {
 
   // Método para lidar com a exclusão de produtos
   onDeleteItem(): void {
-    this.deleteItem(() => this.produtoService.excluirProduto(this.itemToDelete!.id));
+    this.deleteItem(() => {
+      return this.produtoService.excluirProduto(this.itemToDelete!.id).then(() => {
+        // SEMPRE recarregar cache após exclusão (forçar reload do banco)
+        this.produtoService.buscarTodosProdutosParaCache(true).subscribe({
+          next: (data) => {
+            this.produtosCache = data;
+            this.produtosFiltrados = data;
+            this.totalItems = data.length;
+            this.atualizarPaginacaoLocal();
+          }
+        });
+      });
+    });
   }
   // Métodos para gerenciar o modal de formulário
   openFormModal(isEdit: boolean, produto?: Produto): void {
@@ -118,7 +208,16 @@ export class ProdutoComponent extends BaseComponent<Produto> {
 
   // Sobrescrevendo o método para salvar e controlar o modal
   override aposSalvar(): void {
-    this.recarregarItensManterContexto(); // Mantém o contexto da busca e página atual
+    // SEMPRE recarregar cache completo após salvar (forçar reload do banco)
+    this.produtoService.buscarTodosProdutosParaCache(true).subscribe({
+      next: (data) => {
+        this.produtosCache = data;
+        this.produtosFiltrados = data;
+        this.totalItems = data.length;
+        this.atualizarPaginacaoLocal();
+      }
+    });
+    
     this.closeFormModal();
     this.messageService.success();
   }
@@ -148,6 +247,11 @@ export class ProdutoComponent extends BaseComponent<Produto> {
   }
 
   override ngOnInit(): void {
+    this.initializePaginationConfig();
+    this.loaderService.showLoading();
+    // NÃO chamar listarItensPaginados - usamos cache local
+    this.onLoadValues();
+    
     // Verificar se há query parameters de filtro
     this.route.queryParams.subscribe(params => {
       this.filtroAtivo = params['filtro'] || null;
@@ -162,16 +266,16 @@ export class ProdutoComponent extends BaseComponent<Produto> {
         }
       }
     });
-
-    // Chamar o ngOnInit da classe pai
-    super.ngOnInit();
   }
 
   limparFiltros(): void {
     this.filtroAtivo = null;
     this.produtosMaisVendidosIds = [];
-    // Recarregar dados sem filtros
-    this.listarItensPaginados();
+    
+    // Resetar para cache completo
+    this.produtosFiltrados = this.produtosCache;
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
   }  // Método para imprimir produtos
   imprimirProdutos(): void {
     try {
@@ -204,7 +308,16 @@ export class ProdutoComponent extends BaseComponent<Produto> {
       );
       
       this.closeEstoqueModal();
-      this.recarregarItensManterContexto(); // Recarregar mantendo contexto da busca e página
+      
+      // SEMPRE recarregar cache após ajustar estoque (forçar reload do banco)
+      this.produtoService.buscarTodosProdutosParaCache(true).subscribe({
+        next: (data) => {
+          this.produtosCache = data;
+          this.produtosFiltrados = data;
+          this.totalItems = data.length;
+          this.atualizarPaginacaoLocal();
+        }
+      });
       
     } catch (error) {
       console.error('Erro ao ajustar estoque:', error);

@@ -25,6 +25,10 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   // Filtros específicos
   filtroAtivo: string | null = null;
   clientesFrequentesNomes: string[] = [];
+  
+  // Cache completo de clientes
+  clientesCache: Cliente[] = [];
+  clientesFiltrados: Cliente[] = [];
   constructor(
     messageService: MessageService,
     loaderService: LoaderService,
@@ -46,71 +50,94 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   }
 
   override onLoadValues(): void {
-    // Não há valores adicionais para carregar neste componente
-  }
-
-  // Método para navegar para uma página específica (público para uso interno)
-  private async navegarParaPaginaEspecifica(targetPage: number): Promise<void> {
-    if (targetPage <= 1 || targetPage === this.currentPage) {
-      return;
-    }
-
-    try {
-      this.loaderService.showLoading();
-      
-      let currentDoc: QueryDocumentSnapshot<DocumentData> | undefined = undefined;
-      this.pageHistory = [];
-      
-      // Navegar página por página até a página desejada
-      for (let page = 1; page < targetPage; page++) {
-        const result: {
-          items: Cliente[],
-          total: number,
-          lastVisible?: QueryDocumentSnapshot<DocumentData>
-        } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
+    // Buscar clientes (o cache está no serviço, não no componente)
+    this.clienteService.buscarTodosClientesParaCache().subscribe({
+      next: (data) => {
+        this.clientesCache = data;
+        this.clientesFiltrados = data;
+        this.totalItems = data.length;
         
-        if (result.lastVisible) {
-          this.pageHistory.push(result.lastVisible);
-          currentDoc = result.lastVisible;
-        }
+        // Atualizar paginação local
+        this.atualizarPaginacaoLocal();
+        this.loaderService.closeLoading();
+      },
+      error: (error) => {
+        console.error('Erro ao carregar clientes:', error);
+        this.messageService.error('Erro ao carregar clientes');
+        this.loaderService.closeLoading();
       }
-      
-      // Carregar a página final
-      const finalResult: {
-        items: Cliente[],
-        total: number,
-        lastVisible?: QueryDocumentSnapshot<DocumentData>
-      } = await this.buscarItensPaginados(this.pageSize, currentDoc, this.searchTerm);
-      
-      this.items = finalResult.items;
-      this.lastVisible = finalResult.lastVisible;
-      this.currentPage = targetPage;
-      
-    } catch (error) {
-      console.error('Erro ao restaurar página:', error);
-      this.messageService.error('Erro ao restaurar posição na lista');
-    } finally {
-      this.loaderService.closeLoading();
-    }
+    });
   }
 
-  // Implementação do método abstrato do BaseComponent para buscar itens paginados com suporte a busca
+  // Paginação local em memória
   override async buscarItensPaginados(
     pageSize: number, 
     startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
     searchTerm?: string
   ) {
-    // Se há filtro de clientes frequentes ativo, usar o método específico
-    if (this.filtroAtivo === 'frequentes' && this.clientesFrequentesNomes.length > 0) {
-      return this.clienteService.buscarClientesFrequentesPaginados(
-        pageSize, 
-        startAfterDoc, 
-        this.clientesFrequentesNomes
+    // Não usado mais - mantido por compatibilidade
+    return { items: [], total: 0 };
+  }
+  
+  // Atualizar paginação local
+  atualizarPaginacaoLocal(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.items = this.clientesFiltrados.slice(startIndex, endIndex);
+    this.totalItems = this.clientesFiltrados.length;
+    this.totalPages = Math.ceil(this.clientesFiltrados.length / this.pageSize);
+    this.hasMore = this.currentPage < this.totalPages;
+  }
+  
+  // Sobrescrever método de busca
+  override async buscarPorTermo(termo: string): Promise<void> {
+    this.searchTerm = termo;
+    
+    if (!termo || termo.trim() === '') {
+      this.clientesFiltrados = this.clientesCache;
+    } else {
+      const termoUpper = termo.toLocaleUpperCase();
+      this.clientesFiltrados = this.clientesCache.filter(cliente =>
+        cliente.nome.toLocaleUpperCase().includes(termoUpper)
       );
     }
     
-    // Caso contrário, usar o método padrão
-    return this.clienteService.buscarClientesPaginadas(pageSize, startAfterDoc, searchTerm);
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  // Sobrescrever limpar busca
+  override limparBusca(): void {
+    this.searchTerm = '';
+    this.clientesFiltrados = this.clientesCache;
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  // Sobrescrever navegação de páginas
+  override proximaPagina(): void {
+    const totalPages = Math.ceil(this.clientesFiltrados.length / this.pageSize);
+    if (this.currentPage < totalPages) {
+      this.currentPage++;
+      this.atualizarPaginacaoLocal();
+    }
+  }
+  
+  override paginaAnterior(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.atualizarPaginacaoLocal();
+    }
+  }
+  
+  override primeiraPagina(): void {
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
+  }
+  
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
   }
 
   // Método para listagem simples (sem paginação) - mantido para compatibilidade
@@ -127,7 +154,19 @@ export class ClienteComponent extends BaseComponent<Cliente> {
 
   // Método para lidar com a exclusão de clientes
   onDeleteItem(): void {
-    this.deleteItem(() => this.clienteService.excluirCliente(this.itemToDelete!.id, this.itemToDelete!.nome));
+    this.deleteItem(() => {
+      return this.clienteService.excluirCliente(this.itemToDelete!.id, this.itemToDelete!.nome).then(() => {
+        // SEMPRE recarregar cache após exclusão (forçar reload do banco)
+        this.clienteService.buscarTodosClientesParaCache(true).subscribe({
+          next: (data) => {
+            this.clientesCache = data;
+            this.clientesFiltrados = data;
+            this.totalItems = data.length;
+            this.atualizarPaginacaoLocal();
+          }
+        });
+      });
+    });
   }
   // Métodos para gerenciar o modal de formulário
   openFormModal(isEdit: boolean, cliente?: Cliente): void {
@@ -159,7 +198,21 @@ export class ClienteComponent extends BaseComponent<Cliente> {
 
   // Sobrescrevendo o método para salvar e controlar o modal
   override aposSalvar(): void {
-    this.recarregarItensManterContexto(); // Mantém o contexto da busca e página atual
+    // SEMPRE recarregar cache completo após salvar (forçar reload do banco)
+    this.clienteService.buscarTodosClientesParaCache(true).subscribe({
+      next: (data) => {
+        this.clientesCache = data;
+        this.clientesFiltrados = data;
+        this.totalItems = data.length;
+        this.atualizarPaginacaoLocal();
+        this.loaderService.closeLoading();
+      },
+      error: (error) => {
+        console.error('Erro ao recarregar cache:', error);
+        this.loaderService.closeLoading();
+      }
+    });
+    
     this.closeFormModal();
     this.messageService.success();
   }
@@ -190,7 +243,10 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   }
 
   override ngOnInit(): void {
-    // Verificar query parameters antes de chamar o ngOnInit do pai
+    this.initializePaginationConfig();
+    this.loaderService.showLoading();
+    
+    // Verificar query parameters antes de carregar dados
     this.route.queryParams.subscribe(params => {
       // Verificar se estamos restaurando contexto de navegação
       const isRestoringContext = params['searchTerm'] || params['page'] || params['pageSize'];
@@ -233,15 +289,17 @@ export class ClienteComponent extends BaseComponent<Cliente> {
       }
     });
 
-    // Chamar o ngOnInit da classe pai
-    super.ngOnInit();
+    // Carregar dados (NÃO chamar super.ngOnInit pois usamos cache local)
+    this.onLoadValues();
 
     // Se há página específica para restaurar, fazer isso após o carregamento inicial
     this.route.queryParams.subscribe(params => {
       if (params['page'] && parseInt(params['page']) > 1) {
         const targetPage = parseInt(params['page']);
         setTimeout(() => {
-          this.navegarParaPaginaEspecifica(targetPage);
+          // Com paginação local, apenas ir para a página
+          this.currentPage = targetPage;
+          this.atualizarPaginacaoLocal();
         }, 200);
       }
 
@@ -265,8 +323,11 @@ export class ClienteComponent extends BaseComponent<Cliente> {
   limparFiltros(): void {
     this.filtroAtivo = null;
     this.clientesFrequentesNomes = [];
-    // Recarregar dados sem filtros
-    this.listarItensPaginados();
+    
+    // Resetar para cache completo
+    this.clientesFiltrados = this.clientesCache;
+    this.currentPage = 1;
+    this.atualizarPaginacaoLocal();
   }
 
   verVendasCliente(nomeCliente: string): void {

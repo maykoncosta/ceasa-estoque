@@ -15,6 +15,9 @@ export interface Cliente {
   providedIn: 'root'
 })
 export class ClienteService {
+  // Cache estático que persiste entre navegações
+  private cacheEmpresaId: string | null = null;
+  private cacheClientes: Cliente[] = [];
 
   constructor(private firestore: Firestore, private auth: Auth) { }
 
@@ -56,6 +59,67 @@ export class ClienteService {
       console.error('Erro ao criar query de clientes:', error);
       return of([]);
     }
+  }
+
+  /**
+   * Busca TODOS os clientes para cache local (autocomplete, etc)
+   * Use apenas para volumes pequenos (< 500 registros)
+   * Mantém cache em memória que persiste entre navegações
+   */
+  buscarTodosClientesParaCache(forcarReload: boolean = false): Observable<Cliente[]> {
+    const user = this.auth.currentUser;
+    if (!user) return of([]);
+
+    // Verificar se já tem cache válido
+    if (!forcarReload && this.cacheClientes.length > 0 && this.cacheEmpresaId === user.uid) {
+      console.log(`⚡ Clientes já em CACHE (serviço): ${this.cacheClientes.length} clientes`);
+      return of(this.cacheClientes);
+    }
+
+    console.log('💾 Buscando clientes do BANCO...');
+    try {
+      const clientesRef = collection(this.firestore, 'clientes');
+      const q = query(
+        clientesRef, 
+        where('empresa_id', '==', user.uid),
+        orderBy('nome')
+        // SEM LIMIT - busca todos
+      );
+      
+      return from(getDocs(q)).pipe(
+        map(snapshot => {
+          const clientes: Cliente[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            clientes.push({
+              id: doc.id,
+              nome: data['nome'],
+              celular: data['celular'],
+              empresa_id: data['empresa_id']
+            });
+          });
+          
+          // Armazenar no cache
+          this.cacheClientes = clientes;
+          this.cacheEmpresaId = user.uid;
+          console.log(`✅ Cache de clientes atualizado: ${clientes.length} clientes`);
+          
+          return clientes;
+        })
+      );
+    } catch (error) {
+      console.error('Erro ao buscar clientes para cache:', error);
+      return of([]);
+    }
+  }
+  
+  /**
+   * Limpa o cache de clientes (força recarregamento na próxima busca)
+   */
+  limparCache(): void {
+    this.cacheClientes = [];
+    this.cacheEmpresaId = null;
+    console.log('🗑️ Cache de clientes limpo');
   }
 
   async adicionarCliente(cliente: Cliente) {

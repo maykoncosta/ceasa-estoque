@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UntypedFormControl, UntypedFormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Cliente } from 'src/app/core/services/cliente.service';
@@ -37,6 +37,27 @@ export class ClienteFormModalComponent extends BaseFormModalComponent<Cliente> {
         Validators.pattern(/^\(\d{2}\) \d{4,5}-\d{4}$/)
       ])
     });
+  }
+
+  override ngOnChanges(changes: SimpleChanges): void {
+    if (changes[this.itemPropertyName] && this.form) {
+      if (this.currentItem) {
+        // Ao editar, aplicar máscara corretamente no celular
+        const clienteComMascara = {
+          ...this.currentItem,
+          celular: this.phoneValidator.formatarParaExibicao(this.currentItem.celular || '')
+        };
+        this.form.patchValue(clienteComMascara);
+      } else {
+        // Se não há item (modo de criação), resetar o formulário
+        this.form.reset();
+      }
+    }
+    
+    // Resetar quando o modal é aberto em modo de criação
+    if (changes['show'] && this.show && !this.isEdit && this.form) {
+      this.form.reset();
+    }
   }
 
   formatarCelular(event: any): void {

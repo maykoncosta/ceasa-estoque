@@ -80,11 +80,14 @@ export class VendaFormComponent implements OnInit {
   }
 
   loadValues(): void {
-    this.loading = true;    // Carregar clientes
-    this.clienteService.listarClientes().subscribe({
+    this.loading = true;
+    
+    // Carregar TODOS os clientes para cache (sem limite)
+    this.clienteService.buscarTodosClientesParaCache().subscribe({
       next: (data) => {
         this.clientes = data;
         this.clientesFiltrados = data;
+        console.log(`Cache: ${data.length} clientes carregados`);
       },
       error: (error) => {
         console.error('Erro ao carregar clientes:', error);
@@ -101,12 +104,15 @@ export class VendaFormComponent implements OnInit {
         console.error('Erro ao carregar unidades:', error);
         this.messageService.error('Erro ao carregar unidades de medida');
       }
-    });    // Carregar produtos
-    this.produtoService.listarProdutos().subscribe({
+    });
+    
+    // Carregar TODOS os produtos para cache (sem limite)
+    this.produtoService.buscarTodosProdutosParaCache().subscribe({
       next: (data) => {
         this.produtos = data;
         this.produtosFiltrados = data;
         this.loading = false;
+        console.log(`Cache: ${data.length} produtos carregados`);
       },
       error: (error) => {
         console.error('Erro ao carregar produtos:', error);
@@ -176,10 +182,11 @@ export class VendaFormComponent implements OnInit {
       this.limparCamposProduto();
     }
 
+    // Busca local em cache - sem limite mínimo de caracteres
     if (valor.length > 0) {
       this.produtosFiltrados = this.produtos.filter(produto =>
         produto.nome.toLowerCase().includes(valor.toLowerCase())
-      ).slice(0, 10); // Limitar a 10 resultados para performance
+      ).slice(0, 10); // Limitar a 10 resultados para performance do dropdown
       this.showDropdown = this.produtosFiltrados.length > 0;
       this.produtoActiveIndex = -1;
     } else {
@@ -575,10 +582,11 @@ export class VendaFormComponent implements OnInit {
       this.clienteSelecionado = null;
     }
 
+    // Busca local em cache - sem limite mínimo de caracteres
     if (valor.length > 0) {
       this.clientesFiltrados = this.clientes.filter(cliente =>
         cliente.nome.toLowerCase().includes(valor.toLowerCase())
-      ).slice(0, 10); // Limitar a 10 resultados para performance
+      ).slice(0, 10); // Limitar a 10 resultados para performance do dropdown
       this.showClienteDropdown = this.clientesFiltrados.length > 0;
       this.clienteActiveIndex = -1;
     } else {

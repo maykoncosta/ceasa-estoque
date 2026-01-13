@@ -1,0 +1,8 @@
+# Chaves privadas - NUNCA commitar!
+firebase-origem-key.json
+firebase-destino-key.json
+*-key.json
+*.json
+
+# Backups
+backup-*.json

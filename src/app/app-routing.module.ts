@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { LoginComponent } from './pages/login/login.component';
 import { ProdutoComponent } from './pages/produto/produto.component';
@@ -13,7 +12,7 @@ import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-v
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { ContaComponent } from './pages/conta/conta.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   {path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard]},
   {path: 'produtos', component: ProdutoComponent, canActivate: [AuthGuard]},
   {path: 'unidades', component: UnidadeMedidaComponent, canActivate: [AuthGuard]},
@@ -28,9 +27,3 @@ const routes: Routes = [
   {path: '', component: DashboardComponent, canActivate: [AuthGuard]},
   {path: '**', redirectTo: '', canActivate: [AuthGuard]}
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }

@@ -11,6 +11,7 @@ import { ClienteComponent } from './pages/cliente/cliente.component';
 import { ClienteVendasComponent } from './pages/cliente/cliente-vendas/cliente-vendas.component';
 import { RelatorioComponent } from './pages/relatorio/relatorio.component';
 import { ContaComponent } from './pages/conta/conta.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 export const routes: Routes = [
   {path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard]},
@@ -25,5 +26,5 @@ export const routes: Routes = [
   {path: 'conta', component: ContaComponent, canActivate: [AuthGuard]},
   {path: 'login', component: LoginComponent, canActivate: [LoginGuard]},
   {path: '', component: DashboardComponent, canActivate: [AuthGuard]},
-  {path: '**', redirectTo: '', canActivate: [AuthGuard]}
+  {path: '**', component: NotFoundComponent}
 ];

@@ -512,6 +512,8 @@ export class VendaFormComponent implements OnInit {
       }
 
       this.vendaService.atualizarVenda(this.vendaId, venda).then(() => {
+        // Recarregar cache de clientes e produtos após atualização
+        this.produtoService.limparCache();
         this.messageService.success('Venda atualizada com sucesso!');
         this.voltarParaLista();
       }).catch(error => {

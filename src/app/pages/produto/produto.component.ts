@@ -145,9 +145,14 @@ export class ProdutoComponent extends BaseComponent<Produto> {
     this.atualizarPaginacaoLocal();
   }
   
-  onPageSizeChange(): void {
-    this.currentPage = 1;
-    this.atualizarPaginacaoLocal();
+  override alterarTamanhoPagina(event: Event): void {
+    const selectElement = event.target as HTMLSelectElement;
+    if (selectElement) {
+      this.pageSize = Number(selectElement.value);
+      this.paginationConfig.pageSize = this.pageSize;
+      this.currentPage = 1;
+      this.atualizarPaginacaoLocal();
+    }
   }
 
   // Método para listagem simples (sem paginação) - mantido para compatibilidade
